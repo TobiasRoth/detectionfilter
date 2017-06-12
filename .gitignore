@@ -2,6 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
-vignettes/
+vignettes/workflow_cache
+vignettes/simdat_cache
 .DS_Store
 P1262_detectionfilter.Rproj
+

@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+vignettes/
+.DS_Store
+P1262_detectionfilter.Rproj

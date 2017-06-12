@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+vignettes/
+.DS_Store
+.Rproj

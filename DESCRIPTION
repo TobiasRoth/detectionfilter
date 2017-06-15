@@ -1,17 +1,19 @@
 Package: detectionfilter
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Accounting for detection filtering in functional ecology
 Version: 0.1.0
-Author: Tobias Roth
+Author: Tobias Roth, Eric Allan, Peter B. Pearmand, Valentin Amrhein
 Maintainer: Tobias Roth <t.roth@unibas.ch>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Description: The package implements the methods and analyses used in the manusript "Functional ecology and imperfect detection of plant species" by Tobias Roth, Eric Allan, Peter B. Pearmand, and Valentin Amrhein.
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
+Depends: 
+    R (>= 2.10), 
+    unmarked
 Suggests: 
     knitr,
-    rmarkdown,
-    unmarked
-VignetteBuilder: knitr
+    rmarkdown
+VignetteBuilder: 
+    knitr

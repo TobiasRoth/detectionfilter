@@ -12,15 +12,15 @@ vignette: >
 # Introduction
 We think of a community as a collection of species occurring at a single site, while a meta-community is a collection of communities at multiple sites. In this vignette we adopt the simulation of a meta-community described in chapter 11.2 of Kéry and Royle (2016). Note that we here focus on meta-communities for presence/absence patterns of species, while it is rather straightforward to adopt the concepts to abundance data (see Chapter 11 in Kéry and Royle 2016 for more details). 
 
-As a requirement to run the presented code the latest version of the *detecfilter* package should be downloaded using the following code.
+As a requirement to run the presented code the latest version of the *detectionfilter* package should be downloaded using the following code.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE, cache=FALSE}
 library(devtools)
-install_github("TobiasRoth/detecfilter")
-library(detecfilter)
+install_github("TobiasRoth/detectionfilter")
+library(detectionfilter)
 ```
 
-The *detecfilter* package provides the function *simcom()* to simulate community data subject to environmental and detection filtering. 
+The *detectionfilter* package provides the function *simcom()* to simulate community data subject to environmental and detection filtering. 
 
 
 # Hierarchical view of a meta-community

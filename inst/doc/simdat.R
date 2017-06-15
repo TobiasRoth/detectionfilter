@@ -1,7 +1,7 @@
 ## ---- echo=TRUE, message=FALSE, warning=FALSE, cache=FALSE---------------
 library(devtools)
-install_github("TobiasRoth/detecfilter")
-library(detecfilter)
+install_github("TobiasRoth/detectionfilter")
+library(detectionfilter)
 
 ## ---- cache=TRUE---------------------------------------------------------
 # Calculate observed community matrix

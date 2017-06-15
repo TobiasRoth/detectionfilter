@@ -3,7 +3,7 @@
 The latest version can be downloaded directly in R using:
 
 	library(devtools)
-	install_github("TobiasRoth/detecfilter")
-	library(detecfilter)
+	install_github("TobiasRoth/detectionfilter")
+	library(detectionfilter)
 
 

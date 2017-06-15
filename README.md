@@ -1,4 +1,4 @@
-## detectfilter: R-package that documents analyses for a manuscript
+# detectionfilter: R-package that documents analyses for a manuscript
 
 The latest version can be downloaded directly in R using:
 

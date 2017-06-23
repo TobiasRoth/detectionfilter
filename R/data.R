@@ -18,3 +18,24 @@
 #'   }
 #' @source \url{http://www.biodiversitymonitoring.ch/}
 "plantsBDM"
+
+
+#' Traits for the 1733 species observed during the BDM surveys.
+#' 
+#' The Swiss 
+#' 
+#' 
+#' @format A data.frame with the following collumns: 
+#' \describe{ 
+#'   \item{sla}{Specific leaf area.} 
+#'   \item{ch}{Canopy height.} 
+#'   \item{sm}{Seed mass.}
+#'   
+#'   
+#'   }
+#' @source \url{http://www.uni-oldenburg.de/en/biology/landeco/research/projects/leda/}
+"traitmat"
+
+
+
+

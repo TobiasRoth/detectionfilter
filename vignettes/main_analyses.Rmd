@@ -1,0 +1,70 @@
+---
+title: "Main analyses"
+author: "Tobias Roth"
+date: "`r Sys.Date()`"
+output: rmarkdown::pdf_document
+vignette: >
+  %\VignetteIndexEntry{Main analyses}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+As a requirement to run the presented code the latest version of the `detecionfilter` package should be downloaded using the following code. 
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+library(devtools)
+#install_github("TobiasRoth/detectionfilter")
+library(detectionfilter)
+library(unmarked)
+library(parallel)
+```
+
+The `detectionfilter` package provides the function `simcom()` to s 
+
+
+# Estimating detection-corrected meta-communites
+
+
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
+# Number of species
+nspec <- dim(plantsBDM$y)[2]
+nsites <- dim(plantsBDM$y)[1]
+
+# Prepare detection-corrected meta-community matrix
+z <- array(NA, dim = c(nsites, nspec))
+
+# Prepare vector for average detection probability
+P <- numeric(nspec)
+
+# Standardize Julian dates and elevation
+ele <- plantsBDM$elevation
+ele <- (ele - 1000)/100
+dates <- plantsBDM$dates
+dates <- (dates - 200) / 7
+
+# Apply hierarchical model to all species seperate
+f <- function(k) {
+  d <- unmarkedFrameOccu(y = plantsBDM$y[,k,], obsCovs = list(dates = dates), 
+                         siteCovs = data.frame(ele = ele))
+  try({res <- occu(~ (dates + I(dates^2)) * ele ~ ele + I(ele^2), data = d, se = TRUE)
+  mele <- mean(ele[apply(plantsBDM$y[,k,], 1, max)==1])
+  newData <- data.frame(ele = mele, dates = seq(-7.5, 17, 0.5))
+  tmp <- predict(res, type = 'det', newdata = newData)
+  list(P = mean(tmp$Predicted), z =bup(ranef(res), stat = "mode"))
+  })
+}
+
+no_cores <- detectCores()
+cl <- makeCluster(no_cores, type="FORK")
+tmp <- parLapply(cl, 1:nspec, f)
+stopCluster(cl)
+
+```
+
+```{r}
+P <- unlist(lapply(tmp, function(x) x$P))
+```
+
+
+

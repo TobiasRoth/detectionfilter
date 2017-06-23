@@ -43,7 +43,8 @@ ele <- (ele - 1000)/100
 dates <- plantsBDM$dates
 dates <- (dates - 200) / 7
 
-# Apply hierarchical model to all species seperate
+# Function that applies for species k the hierarchical model and estimates average detection 
+# probability of the species and detection corrected occurrence of that species across all sites
 f <- function(k) {
   d <- unmarkedFrameOccu(y = plantsBDM$y[,k,], obsCovs = list(dates = dates), 
                          siteCovs = data.frame(ele = ele))
@@ -51,7 +52,7 @@ f <- function(k) {
   mele <- mean(ele[apply(plantsBDM$y[,k,], 1, max)==1])
   newData <- data.frame(ele = mele, dates = seq(-7.5, 17, 0.5))
   tmp <- predict(res, type = 'det', newdata = newData)
-  list(P = mean(tmp$Predicted), z =bup(ranef(res), stat = "mode"))
+  list(P = median(tmp$Predicted, na.rm = TRUE), P_SE = median(tmp$SE, na.rm = TRUE), z =bup(unmarked::ranef(res), stat = "mode"))
   })
 }
 
@@ -62,9 +63,149 @@ stopCluster(cl)
 
 ```
 
+Get vector with detection probabilities per species and detection corrected meta-community matrix.
+
 ```{r}
-P <- unlist(lapply(tmp, function(x) x$P))
+P <- as.numeric(sapply(tmp, function(x) x[1]))
+P_ER <- as.numeric(sapply(tmp, function(x) x[2]))
+tf <-  function(x) {
+  res <- rep(NA, nsites)
+  try(res <- x[[3]])
+  res
+}
+z <-  sapply(tmp, tf)
+
+
+
 ```
+
+# Fill not available trait information and check for effects
+We analysed three traits: (1) specific leaf area (ratio of fresh leaf area to leaf dry mass, SLA), (2) canopy height (CH) and (3) seed mass (SM). Data for these traits came from the LEDA trait database (Kleyer et al. 2008). The trait values are in the data.frame `traitmat`.
+
+
+
+```{r, cache=TRUE}
+
+traitmat_NA <- detectionfilter::traitmat
+
+
+# Calculate numbers for Table 2
+apply(traitmat_NA, 2, function(x) mean(!is.na(x)))
+apply(traitmat_NA, 2, median, na.rm = TRUE)
+apply(traitmat_NA, 2, range, na.rm = TRUE)
+
+# Correlation between traits
+cor(traitmat_NA$sla, traitmat_NA$ch, use = "complete.obs")
+cor(traitmat_NA$sla, traitmat_NA$sm, use = "complete.obs")
+cor(traitmat_NA$ch, traitmat_NA$sm, use = "complete.obs")
+
+
+```
+
+```{r}
+
+# Nonparametric Missing Value Imputation using Random Forest
+library(missForest)
+traitmat <- missForest(as.matrix(traitmat), maxiter = 10)$ximp
+traitmat <- as.data.frame(traitmat)
+
+# Test correlation betwen traitmat with and without na: SLA
+res1 <- res2 <- res3 <- res4 <- numeric()
+
+commat <- commat_obs
+for(i in 1:nrow(commat)) {
+  res1[i] <- mean(traitmat$sla[commat[i,]==1], na.rm = TRUE)
+  res2[i] <- mean(traitmat_NA$sla[commat[i,]==1], na.rm = TRUE)
+  res3[i] <- sd(traitmat$sla[commat[i,]==1], na.rm = TRUE)
+  res4[i] <- sd(traitmat_NA$sla[commat[i,]==1], na.rm = TRUE)
+}
+cor(res1, res2)
+cor(res3, res4)
+
+# Canopy height
+res1 <- res2 <- res3 <- res4 <- numeric()
+for(i in 1:nrow(commat)) {
+  res1[i] <- mean(traitmat$ch[commat[i,]==1], na.rm = TRUE)
+  res2[i] <- mean(traitmat_NA$ch[commat[i,]==1], na.rm = TRUE)
+  res3[i] <- sd(traitmat$ch[commat[i,]==1], na.rm = TRUE)
+  res4[i] <- sd(traitmat_NA$ch[commat[i,]==1], na.rm = TRUE)
+}
+cor(res1, res2)
+cor(res3, res4)
+
+# Seed mass
+res1 <- res2 <- res3 <- res4 <- numeric()
+for(i in 1:nrow(commat)) {
+  res1[i] <- mean(traitmat$sm[commat[i,]==1], na.rm = TRUE)
+  res2[i] <- mean(traitmat_NA$sm[commat[i,]==1], na.rm = TRUE)
+  res3[i] <- sd(traitmat$sm[commat[i,]==1], na.rm = TRUE)
+  res4[i] <- sd(traitmat_NA$sm[commat[i,]==1], na.rm = TRUE)
+}
+cor(res1, res2)
+cor(res3, res4)
+
+# Log transform and scale variable
+traitmat$sla <- scale(log(traitmat$sla))[,1]
+traitmat$ch <- scale(log(traitmat$ch))[,1]
+traitmat$sm <- scale(log(traitmat$sm+0.1))[,1]
+traitmat_NA$sla <- scale(log(traitmat_NA$sla))[,1]
+traitmat_NA$ch <- scale(log(traitmat_NA$ch))[,1]
+traitmat_NA$sm <- scale(log(traitmat_NA$sm+0.1))[,1]
+
+```
+
+
+
+
+# Simple analyses
+
+```{r}
+
+CM <- function(x) mean(traitmat$ch[x], na.rm = TRUE)
+commat_obs <- apply(plantsBDM$y, c(1,2), max)
+CM_obs <- apply(commat_obs==1, 1, CM)
+CM_cor <- apply(z==1, 1, CM)
+
+plot(plantsBDM$elevation, CM_obs, pch = 16, cex = 0.6)
+points(plantsBDM$elevation, CM_cor, pch = "x", cex = 0.6, col = "red")
+
+
+cor.test(traitmat_NA$sla, P)
+cor.test(traitmat_NA$ch, P)
+cor.test(traitmat_NA$sm, P)
+
+plot(log(traitmat$sla), P)
+plot(log(traitmat$ch), P)
+plot(log(traitmat$sm+1), P)
+
+
+library(metafor)
+d <- traitmat_NA
+d$P <- P
+d$P_ER <- P_ER
+d <- d[!is.na(d$P) & d$P!= Inf,]
+cor.test(d$P, d$sla)
+cor.test(d$P, d$ch)
+cor.test(d$P, d$sm)
+
+m <- rma(yi = P, sei = P_ER, mods = ~ sla, method = "REML", data = d)
+summary(m)
+m <- rma(yi = P, sei = P_ER, mods = ~ ch, method = "REML", data = d)
+summary(m)
+m <- rma(yi = P, sei = P_ER, mods = ~ sm, method = "DL", data = d)
+summary(m)
+
+
+
+m <- rma(yi = P, sei = P_ER, mods = ~ log(ch) + sla + log(sm+1) , method = "REML", data = d[apply(commat_obs, 2, sum)>=20, ])
+summary(m)
+
+lm(P ~ sla + log(ch+1) + log(sm+1), data = d[!is.na(d$P),])
+
+
+```
+
+
 
 
 

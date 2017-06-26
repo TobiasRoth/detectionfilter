@@ -3,7 +3,7 @@
 \docType{data}
 \name{plantsBDM}
 \alias{plantsBDM}
-\title{Two surveys of Swiss plant communities from Swiss Biodiversity Monitoring.}
+\title{Plant observations from two surveys to 362 plots of 1km^2}
 \format{A list with xx elements: \describe{ \item{y}{Array with 
   presence/absence observed in 362 squares for 1733 species during two 
   surveys.} 

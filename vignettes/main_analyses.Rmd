@@ -29,9 +29,9 @@ library(FD)
 ```
 
 ## Data from the Swiss Biodiversity monitoring (BDM)
-The `detectionfilter` package contains the data of the plant surveys from the Swiss biodiversity monitoring (`plantsBDM`). The array `y[i,k,j]` contains the observed presence/absence data of the `ì=1,2,...,362` $1-km^{2}$ plots, the `k=1,2,...,1733` observed plant species and the `j=1,2` visits. Furthermore, `plantsBDM` contains the median elevation for each plot (`elevation`), as well the dates (Julian day) for each visit to the plots (`dates`).
+The `detectionfilter` package contains the data of the plant surveys from the Swiss biodiversity monitoring (`plantsBDM`). The array `y[i,k,j]` contains the detection-non detection data of the `i=1,2,...,362` $1-km^{2}$ plots, the `k=1,2,...,1733` observed plant species and the `j=1,2` visits. Furthermore, `plantsBDM` contains the median elevation for each plot (`elevation`), as well the dates (Julian day) for each visit to the plots (`dates`).
 
-We call the species that are occurring at a plot a _community_. In the case of `plantsBDM` we speak of `meta-community` data because they contain observations of 362 communities. Further note, that `y[i,k,j]` contain the information whether or not a species was _observed_. If we refer to _occurrence_ we mean the true occurence that is not directly observable during a survey because we are not necessarily detect all species.
+We call the assamblages of species that are occurring at a plot a _community_. In the case of `plantsBDM` we speak of `meta-community` data because they contain observations of 362 communities. Further note, that `y[i,k,j]` contain the information whether or not a species was _observed_. If we refer to _occurrence_ we mean the true occurence that is not directly observable during a survey because we are not necessarily detect all species.
 
 ```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # Number of plots, species and visits
@@ -71,9 +71,10 @@ apply(traitmat_NA, 2, function(x) mean(!is.na(x)))
 
 In our data set, up to 35% of values were missing for any particular trait. We therefore imputed missing values using random forest estimation implemented in the R package `missForest` (Stekhoven & Buhlmann 2012).
 
-```{r, message=FALSE, warning=FALSE, cache=TRUE, results = FALSE}
+```{r, message=FALSE, warning=FALSE, cache=TRUE, results='hide'}
 # Nonparametric missing value imputation using random forest
-traitmat <- missForest(as.matrix(traitmat_NA), maxiter = 10)$ximp
+set.seed(123)
+traitmat <- missForest(as.matrix(traitmat_NA))$ximp
 traitmat <- as.data.frame(traitmat)
 ```
 
@@ -122,7 +123,7 @@ dates <- plantsBDM$dates
 dates <- (dates - 200) / 7
 ```
 
-Now, we are ready to apply the occupancy model for each species separately. A convenient way to do so would be to apply a for-loop over all species. However, for-loops in R are usually not very efficient. That is why we aimed to use the `lapply()` function. To do so, we first had to bundle all the calculations that should be applied separately to each species in a single function (`f.speccalc`):
+Now, we are ready to apply the occupancy model for each species separately. A convenient way to do so would be to apply a for-loop over all species. However, for-loops in R are usually not very efficient. That is why we aimed to use the `lapply()` function. To do so, we first had to bundle all the calculations that should be applied to each species in a single function (`f.speccalc`):
 
 1. The function `unmarkedFrameOccu()` of the package `unmarked` is used to bundle the data needed for the single season occupancy model. These are the observations `y[i,j]` that contains 1 if the species was observed in plot `i` during visit `j`, or 0 otherwise. Note that `plantsBDM$y` is three dimensional because it contains the observations for all species. Further, the matrix `dates[i,j]` contains the Julian day when visit `j` was conducted to plot `i` and the vector `ele[i]` that contains the elevation for each plot `i`.
 
@@ -130,7 +131,7 @@ Now, we are ready to apply the occupancy model for each species separately. A co
 
 3. Some species were observed only at very few plots that leads to an error of the `occu()` function because the algorithm did not converge. In order to avoid that the calculation stops at this point we put the `try()` function around these calculations.
 
-4. We estimated the average detectability of a species (`Pi[k]`), , which is independent of the true distribution of the species, by assuming that the species was present on all  plots. We averaged the probabilities of detecting the species during at least one of the two surveys across all plots.
+4. We estimated the average detectability of a species (`Pi[k]`), which is independent of the true distribution of the species, by assuming that the species was present on all  plots. We averaged the probabilities of detecting the species during at least one of the two surveys across all plots.
 
 5. A single season occupancy model is a hierarchical model in the form of `f(y[i,j]|z[i])` were `z[i]` is the true species presence at plot `i`. The function `ranef()` estimates posterior distributions of the `z` using empirical Bayes methods. Finally, we use  the function `bup()` to extract the mode of the posterior probability.
 Both functions are from the package `unmarked`. 
@@ -173,6 +174,7 @@ no_cores <- detectCores()
 cl <- makeCluster(no_cores, type="FORK")
 resoccu <- parLapply(cl, 1:nspec, f.speccalc)
 stopCluster(cl)
+save.image("deteccor.RDATA")
 ```
 
 Finally, we need to bundle the results in a vector `P` that contains the average detection probability per species and in the detection-corrected meta-community matrix `z[i,k]` that contains the (estimated) true occurences for species `k` at site `i`.
@@ -191,7 +193,7 @@ We define detection filtering as any methodological process that selects the spe
 
 ```{r, cache=TRUE}
 # Prepare data.frame with all data for linear model
-d <- traitmat
+d <- traitmat_NA
 d$P <- P
 d$nobs <- apply(commat_obs, 2, sum)
 d <- d[!is.na(d$P),]
@@ -200,7 +202,7 @@ d <- d[!is.na(d$P),]
 round(summary(lm(qlogis(P) ~ sla + ch + sm, data = d))$coef, 3)
 ```
 
-The intercept corresponds to the detection probability at the logit scale of a plant species with average trait expression. On the probability scale this corresponds to a detection probability of `r round(plogis(1.307),2)`. If the functional trait is increased by one standard deviation detection probability increases to `r round(plogis(1.307 + 0.236), 2)` for canopy height, to `r round(plogis(1.307 + 0.112), 2)` for seed mass, and to `r round(plogis(1.307 + 0.033), 2)` for specific leaf area.  
+The intercept corresponds to the species' detection probability at the logit scale of a plant species with average trait expression. On the probability scale this corresponds to a detection probability of `r round(plogis(1.737),2)`. If the functional trait is increased by one standard deviation detection probability increases to `r round(plogis(1.737 + 0.172), 2)` for canopy height, to `r round(plogis(1.737 + 0.161), 2)` for seed mass, and decreased to `r round(plogis(1.737 - 0.056), 2)` for specific leaf area.  
 
 Overall, these results remain rather stable if the linear model is applied only to the 50% most common species.
 
@@ -219,43 +221,48 @@ We calculated functional composition (i.e. single trait measures such as communi
 ```{r, cache=TRUE}
 # Remove species for which occupancy model did not converge
 commat <- commat_obs[, apply(z, 2, function(x) sum(is.na(x))==0)]
+traitmat <- traitmat[apply(z, 2, function(x) sum(is.na(x))==0), ]
 z <- z[, apply(z, 2, function(x) sum(is.na(x))==0)]
+
 ```
 
 Now, both `commat` and `z` contain `r nrow(commat)` rows for each plot and `r ncol(commat)` columns for each species for which true occurrences could be estimated.
 
 ## Detection filtering and community composition
-To estimate community functional composition, we calculated for each community the mean trait value across all species and did this separately for each of the three functional traits and both for the observed meta-community (`commat`) and the detection corrected meta-community (`z`). We also calculated for each trait whether the community mean based on the observed meta-community and the community mean based on the detection-corrected meta-community differed more than a tenth of the range in community means covered along the entire gradient. Such a difference we consider as relevant because it would be similar in size as the actual change of community means along elevation we aim to infer. 
+To estimate community functional composition, we calculated for each community the mean trait value across all species and did this separately for each of the three functional traits and both for the observed meta-community (`commat`) and the detection corrected meta-community (`z`). 
+
+We also calculate for each community whether the effect of detection filtering is relevant. We consider the effect of detection filtering on community composition as relevant if it is larger than the change of community composition we observe per 500m along the elevational gradient. 
+
 ```{r, cache=TRUE}
 # Specific leaf area (SLA)
 f.sla <- function(x) mean(traitmat$sla[as.logical(x)])
 CM.sla.obs <- apply(commat, 1, f.sla)
 CM.sla.cor <- apply(z, 1, f.sla)
-rel <- (max(CM.sla.obs) - min(CM.sla.obs)) / 10
+rel <- 500 * abs(lm(CM.sla.cor ~ plantsBDM$elevation)$coef[2])
 dif.sla <- abs(CM.sla.obs - CM.sla.cor) > rel
 
 # Canopy height (CH)
 f.ch <- function(x) mean(traitmat$ch[as.logical(x)])
 CM.ch.obs <- apply(commat, 1, f.ch)
 CM.ch.cor <- apply(z, 1, f.ch)
-rel <- (max(CM.ch.obs) - min(CM.ch.obs)) / 10
+rel <- 500 * abs(lm(CM.ch.cor ~ plantsBDM$elevation)$coef[2])
 dif.ch <- abs(CM.ch.obs - CM.ch.cor) > rel
 
 # Seed mass (SM)
 f.sm <- function(x) mean(traitmat$sm[as.logical(x)])
 CM.sm.obs <- apply(commat, 1, f.sm)
 CM.sm.cor <- apply(z, 1, f.sm)
-rel <- (max(CM.sm.obs) - min(CM.sm.obs)) / 10
+rel <- 500 * abs(lm(CM.sm.cor ~ plantsBDM$elevation)$coef[2])
 dif.sm <- abs(CM.sm.obs - CM.sm.cor) > rel
 ```
 
-Bias due to imperfect detection was larger than a fivth of the range of observed community means across the gradient in `r round(100*mean(dif.sla),1)`% of communities for SLA, in `r round(100*mean(dif.ch),1)`% of communities for canopy height and in `r round(100*mean(dif.sm),1)`% of communities for seed mass. Nonetheless, correlation between community means of observed and detection corrected communities was rather high (SLA: `r round(cor(CM.sla.cor, CM.sla.obs),3)`, CH: `r round(cor(CM.ch.cor, CM.ch.obs),3)`, SM: `r round(cor(CM.sm.cor, CM.sm.obs),3)`).
+Bias due to detection filtering was relevant in `r round(100*mean(dif.sla),1)`% of communities for SLA, in `r round(100*mean(dif.ch),1)`% of communities for canopy height and in `r round(100*mean(dif.sm),1)`% of communities for seed mass. Nonetheless, correlation between community means of observed and detection corrected communities was rather high (SLA: `r round(cor(CM.sla.cor, CM.sla.obs),3)`, CH: `r round(cor(CM.ch.cor, CM.ch.obs),3)`, SM: `r round(cor(CM.sm.cor, CM.sm.obs),3)`).
 
-In the following we define the the function `f.plotFD()` that is plotting the observed community means along the elevational gradient. We consider a difference between observed and detection-corrected mean as relevant if it is larger than half the standard deviation of the community means along the entire gradient. We therefore show communities with larger differences than half a standard deviation in colours.
+In the following we define  the function `f.plotFD()` that is plotting the observed community means along the elevational gradient.
 
 ```{r}
-f.plotFD <- function(d, title, tylab, ymin = -0.75, 
-                     ymax = 0.5, tticks = 0.25, yleg = c(-0.475, -0.59)) {
+f.plotFD <- function(d, title, tylab, ymin = -0.75, leg.cex = 0.8,
+                     ymax = 0.5, tticks = 0.25, yleg = c(-0.475, -0.59), xleg = c(350, 300)) {
   ele <- 400:2500
   xax <- seq(250, 2750, 250)
   tcol <- brewer.pal(8, "Set1")
@@ -276,19 +283,19 @@ f.plotFD <- function(d, title, tylab, ymin = -0.75,
   axis(side = 2, at = round(seq(ymin, ymax, tticks), 2), pos = 250, las = 1)
   mtext(text = tylab, side = 2, line = 3, cex = 0.7)
   mtext(text = title, side = 3, at = -420, line = 1.5, cex = 0.8, adj = 0)
-  legend(350, yleg[1], c("     underestimated values", 
+  legend(xleg[1], yleg[1], c("     underestimated values", 
                       "     overestimated values"), col = tcol[1:2], 
-         bty = "n", cex = 0.8, pch = c(16,16), pt.cex = 1, y.intersp=0.8)
-  legend(300, yleg[2], c("prediction from observed communities", 
+         bty = "n", cex = leg.cex, pch = c(16,16), pt.cex = 1, y.intersp=0.8)
+  legend(xleg[2], yleg[2], c("prediction from observed communities", 
                        "detection corrected prediction"), 
-         bty = "n", cex = 0.8, lty = c(2,1), y.intersp=0.8)
+         bty = "n", cex = leg.cex, lty = c(2,1), y.intersp=0.8)
 }
 
 ```
 
-Now we apply the function to the date of the three traits separately.
+Now we apply the function to the results on community means of the three traits separately.
 
-```{r fig2, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
+```{r fig1, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
 # Plot settings
 par(mfrow = c(1, 3), mar = c(2.5,4,3,1.5), oma = c(1,1,1,1))
 # Specific leaf area (SLA)
@@ -304,9 +311,9 @@ d <- data.frame(cbind(obs=CM.sm.obs, cor=CM.sm.cor, dif = dif.sm, elevation = pl
 f.plotFD(d, "(c) Seed mass", "Normalized log-transformed seed mass")
 ```
 
-**Fig. 1:** Change of community means (CMs) of log-transformed and normalized (z-score) trait values along the elevational gradient for the three functional traits (a) specific leaf area, (b) canopy height and (c) seed mass. Points give CMs of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates of CMs by more than half a standard deviation of CMs along the gradient (red points: observed CMs are lower than detection-corrected CMs; blue points: observed CMs are larger than detection-corrected CMs). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted line) and to the detection-corrected communities (solid line).
+**Fig. 1:** Change of community means (CMs) of log-transformed and normalized (z-score) trait values along the elevational gradient for the three functional traits (a) specific leaf area, (b) canopy height and (c) seed mass. Points give CMs of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates of CMs more than the change of community composition we observe per 500m along the elevational gradient (red points: observed CMs are lower than detection-corrected CMs; blue points: observed CMs are larger than detection-corrected CMs). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted line) and to the detection-corrected communities (solid line).
 
-# Community diversity along elevational gradient
+## Community diversity along elevational gradient
 We quantify functional diversity for each community as the multivariate convex hull volume, i.e. functional richness (FRic), and as the mean nearest neighbour distance, using the Euclidean distance between species in multivariate trait space (Swenson & Weiser 2014). 
 
 ```{r, cache=TRUE}
@@ -314,7 +321,8 @@ We quantify functional diversity for each community as the multivariate convex h
 f.FRic <- function(x) convhulln(traitmat[as.logical(x),], "FA")$vol
 FRic.obs <- apply(commat, 1, f.FRic)
 FRic.cor <- apply(z, 1, f.FRic)
-FRic.dif <- abs(FRic.obs - FRic.cor) > 0.5*sd(FRic.obs)
+rel <- 500 * abs(lm(FRic.obs ~ plantsBDM$elevation)$coef[2])
+FRic.dif <- abs(FRic.obs - FRic.cor) > rel
 
 ## Calculate distance matrix from trait matrix 
 dist <- as.matrix(dist(traitmat))
@@ -326,22 +334,24 @@ f.mnnd <- function(x) {
 }
 mnnd.obs <- apply(commat, 1, f.mnnd)
 mnnd.cor <- apply(z, 1, f.mnnd)
-mnnd.dif <- abs(mnnd.obs - mnnd.cor) > 0.5*sd(mnnd.obs)
+rel <- 500 * abs(lm(mnnd.obs ~ plantsBDM$elevation)$coef[2])
+mnnd.dif <- abs(mnnd.obs - mnnd.cor) > rel
 
 # Taxonomic richness (species richness SR)
 SR.obs <- apply(commat, 1, sum)
 SR.cor <- apply(z, 1, sum)
-SR.dif <- abs(SR.obs - SR.cor) > 0.5*sd(SR.obs)
+rel <- 500 * abs(lm(SR.obs ~ plantsBDM$elevation)$coef[2])
+SR.dif <- abs(SR.obs - SR.cor) > rel
 ```
 
 In average only about `r round(100*mean(SR.obs)/mean(SR.cor), 1)`% of the species in of detection corrected communities were actually observed. 
 
-Bias due to imperfect detection was larger than half a standard deviation of estimates across communities in `r round(100*mean(FRic.dif),1)`% of communities for functional richness, and in `r round(100*mean(mnnd.dif),1)`% of communities for functional packing. Nonetheless, correlation between estimates of observed and detection corrected communities was rather high (FRic: `r round(cor(FRic.cor, FRic.obs),3)`, mnnd: `r round(cor(mnnd.cor, mnnd.obs),3)`).
+Bias due to imperfect detection was relevant in `r round(100*mean(FRic.dif),1)`% of communities for functional richness, and in `r round(100*mean(mnnd.dif),1)`% of communities for functional packing. Nonetheless, correlation between estimates of observed and detection corrected communities was rather high (FRic: `r round(cor(FRic.cor, FRic.obs),3)`, mnnd: `r round(cor(mnnd.cor, mnnd.obs),3)`).
 
 
 We again use the `f.plotFD()` function to make the plots for functional richness, functional packing and species richness.
 
-```{r fig3, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
+```{r fig2, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
 # Plot settings
 par(mfrow = c(1, 3), mar = c(2.5,4,3,1.5), oma = c(1,1,1,1))
 
@@ -362,8 +372,62 @@ f.plotFD(d, "(c) Taxonomic richness", "Number of species",
 
 ```
 
-**Fig. 2:** Changes in (a) functional richness (convex hull volume of the three functional dimensions’ specific leaf area, canopy height and seed mass) (b) functional packing (mean nearest neighbour distance) and (c) taxonomic diversity (number of species) along the elevational gradient. Points give the estimates of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates by more than half a standard deviation of estimates along the gradient (red points: observed estimates are below the detection-corrected estimates; blue points: observed estimates are above the detection-corrected estimates). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted lines) and to the detection-corrected communities (solid line).
+**Fig. 2:** Changes in (a) functional richness (convex hull volume of the three functional dimensions’ specific leaf area, canopy height and seed mass) (b) functional packing (mean nearest neighbour distance) and (c) taxonomic diversity (number of species) along the elevational gradient. Points give the estimates of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates more than the change of community diversity we observe per 500m along the elevational gradient (red points: observed estimates are below the detection-corrected estimates; blue points: observed estimates are above the detection-corrected estimates). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted lines) and to the detection-corrected communities (solid line).
 
+
+Since detection-corrected communities contain more species than observed communities (Fig. 2c), it is not surprising that the convex hull volumes is increasing in detection-corrected communities (Fig. 2a). Liekwise, the more species in detection-corrected communities result in lower mean nearest neigbour distance and thus in increesed functional packing (Fig. 2b). 
+
+To show detection-filtering effects on functional diversity independend of the number of species in the communities, we randomly sampled 100  meta-communites from the 1635 species with the same number of species as in the observed meta-community. Likewise, we sampled another 100 meta-communites with the same number of species as in the detection-corrected meta-community.For all random meta-communities we estimated functional richness and functional packaging. 
+
+```{r, cache=TRUE}
+# Numer of random meta-communites
+nsim <- 100
+
+# Prepare array for simulation results
+simres.FRic.commat <- array(NA, dim = c(nplots, nsim))
+simres.mnnd.commat <- array(NA, dim = c(nplots, nsim))
+simres.FRic.z <- array(NA, dim = c(nplots, nsim))
+simres.mnnd.z <- array(NA, dim = c(nplots, nsim))
+
+# Run simulation and calculate FRic and mnnd for all communities 
+for(i in 1: nsim) {
+  sim.commat <- t(sapply(1:nplots, function(x) commat[x, sample(1:nspec_with_res)]))
+  simres.FRic.commat[, i] <- apply(sim.commat, 1, f.FRic)
+  simres.mnnd.commat[, i] <- apply(sim.commat, 1, f.mnnd)
+  sim.z <- t(sapply(1:nplots, function(x) z[x, sample(1:nspec_with_res)]))
+  simres.FRic.z[, i] <- apply(sim.z, 1, f.FRic)
+  simres.mnnd.z[, i] <- apply(sim.z, 1, f.mnnd)
+}
+```
+
+We  use the `f.plotFD()` function to make the plots for standardized functional richness and standardized functional packing and species richness.
+
+```{r fig3, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
+# Plot settings
+par(mfrow = c(1, 2), mar = c(2.5,4,3,1.5), oma = c(1,1,1,1))
+
+# Functional richness
+tmp.obs <- (FRic.obs - apply(simres.FRic.commat, 1, mean)) / apply(simres.FRic.commat, 1, sd)
+tmp.cor <- (FRic.cor - apply(simres.FRic.z, 1, mean)) / apply(simres.FRic.z, 1, sd)
+rel <- 500 * abs(lm(tmp.obs ~ plantsBDM$elevation)$coef[2])
+tmp.dif <- abs(tmp.obs - tmp.cor) > rel
+d <- data.frame(cbind(obs=tmp.obs, cor=tmp.cor, dif = tmp.dif, elevation = plantsBDM$elevation))
+f.plotFD(d, "(a) Functional richness", "Standardized convex hull volume", 
+         ymin = -6, ymax = 6, tticks = 3, yleg = c(6, 4.5),  xleg = c(1650, 1600), leg.cex = 0.5)
+lines(c(250, 2750), c(0, 0), col = "grey")
+
+# Functional packing (mnnd)
+tmp.obs <- (mnnd.obs - apply(simres.mnnd.commat, 1, mean)) / apply(simres.mnnd.commat, 1, sd)
+tmp.cor <- (mnnd.cor - apply(simres.mnnd.z, 1, mean)) / apply(simres.mnnd.z, 1, sd)
+rel <- 500 * abs(lm(tmp.obs ~ plantsBDM$elevation)$coef[2])
+tmp.dif <- abs(tmp.obs - tmp.cor) > rel
+d <- data.frame(cbind(obs=tmp.obs, cor=tmp.cor, dif = tmp.dif, elevation = plantsBDM$elevation))
+f.plotFD(d, "(b) Functional packing", "Standardized mean nearest neighbour distance", 
+         ymin = -6, ymax = 6, tticks = 3, yleg = c(6, 4.5), xleg = c(1650, 1600), leg.cex = 0.5)
+lines(c(250, 2750), c(0, 0), col = "grey")
+```
+
+**Fig. 3:** Changes in (a) standardized functional richness (convex hull volume of the three functional dimensions’ specific leaf area, canopy height and seed mass) and (b) standardized functional packing (mean nearest neighbour distance) along the elevational gradient. Points give the estimates of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates more than the change of standardized community diversity we observe per 500m along the elevational gradient (red points: observed estimates are below the detection-corrected estimates; blue points: observed estimates are above the detection-corrected estimates). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted lines) and to the detection-corrected communities (solid line).
 
 # Referenzen
 Chen, G.; Kéry, M.; Plattner, M.; Ma, K.; Gardner, B., 2013. Imperfect detection is the rule rather than the exception in plant distribution studies. - Journal of Ecology 101: 183–191.

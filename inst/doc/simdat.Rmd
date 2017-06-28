@@ -1,6 +1,6 @@
 ---
 title: "Simulation of meta-community data subject to environmental and detection filtering"
-author: "Tobias Roth"
+author: "Tobias Roth, Eric Allan, Peter B. Pearman and Valentin Amrhein"
 date: "`r Sys.Date()`"
 output: rmarkdown::pdf_document
 vignette: >

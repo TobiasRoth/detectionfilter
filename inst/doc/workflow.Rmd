@@ -1,6 +1,6 @@
 ---
 title: "Accounting for imperfect detection in functional ecology using hierarchical models in R"
-author: "Tobias Roth"
+author: "Tobias Roth, Eric Allan, Peter B. Pearman and Valentin Amrhein"
 date: "`r Sys.Date()`"
 output: rmarkdown::pdf_document
 vignette: >
@@ -62,10 +62,10 @@ z <- array(NA, dim = c(dim(dat$y)[1], dim(dat$y)[2]))
 
 # Apply hierarchical model to all species seperate
 for(k in 1:dim(dat$y)[2]) {
-  d <- unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
+  d <- unmarked::unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
                          siteCovs = data.frame(gradient = dat$gradient))
-  res <- occu(~ date ~ gradient, data = d, se = TRUE)
-  z[,k] <- bup(ranef(res), stat = "mode")
+  res <- unmarked::occu(~ date ~ gradient, data = d, se = TRUE)
+  z[,k] <- unmarked::bup(unmarked::ranef(res), stat = "mode")
 }
 ```
 
@@ -73,7 +73,7 @@ Note, that the functions `ranef()` and `bup()` can be applied to all hierarchica
 
 But let's go on with the presence/absence data example. Say, we are interested in how the mean trait expression of the species in a community (i.e. community mean CM) changes along the gradient. We calculate CMs from observed meta-community, from the detection-corrected meta-community  and from the true meta-community. Note that the later we only know because we simulated the data. 
 
-```{r, cache=TRUE, fig.height=4}
+```{r, cache=TRUE, fig.height=5}
 # Function to calculate mean trait expression of species in a community (CM)
 CM <- function(x) mean(dat$traitmat[x])
 
@@ -135,14 +135,14 @@ Indeed more than a quarter of the species were observed in less than 10% of the 
 
 As above we estimate the detection corrected meta-community using the functions form the package `unmarked`, calculate CMs from detection-corrected meta-communities and compare it with the CMs from observations and the true meta-community known from the simulation.
 
-```{r, message=FALSE, warning=FALSE, cache=TRUE}
+```{r, message=FALSE, warning=FALSE, cache=TRUE, fig.height=5}
 # Estimate detection-corrected meta-community matrix
 z <- array(NA, dim = c(dim(dat$y)[1], dim(dat$y)[2]))
 for(k in 1:dim(dat$y)[2]) {
-  d <- unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
+  d <- unmarked::unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
                          siteCovs = data.frame(gradient = dat$gradient))
-  res <- occu(~ date ~ gradient, data = d, se = TRUE)
-  z[,k] <- bup(ranef(res), stat = "mode")
+  res <- unmarked::occu(~ date ~ gradient, data = d, se = TRUE)
+  z[,k] <- unmarked::bup(unmarked::ranef(res), stat = "mode")
 }
 
 # Calculate CMs

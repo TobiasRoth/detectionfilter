@@ -1,6 +1,6 @@
 ---
 title: "Accounting for imperfect detection in functional ecology using hierarchical models in R"
-author: "Tobias Roth"
+author: "Tobias Roth, Eric Allan, Peter B. Pearman and Valentin Amrhein"
 date: "`r Sys.Date()`"
 output: rmarkdown::pdf_document
 vignette: >
@@ -62,10 +62,10 @@ z <- array(NA, dim = c(dim(dat$y)[1], dim(dat$y)[2]))
 
 # Apply hierarchical model to all species seperate
 for(k in 1:dim(dat$y)[2]) {
-  d <- unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
+  d <- unmarked::unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
                          siteCovs = data.frame(gradient = dat$gradient))
-  res <- occu(~ date ~ gradient, data = d, se = TRUE)
-  z[,k] <- bup(ranef(res), stat = "mode")
+  res <- unmarked::occu(~ date ~ gradient, data = d, se = TRUE)
+  z[,k] <- unmarked::bup(unmarked::ranef(res), stat = "mode")
 }
 ```
 
@@ -139,10 +139,10 @@ As above we estimate the detection corrected meta-community using the functions 
 # Estimate detection-corrected meta-community matrix
 z <- array(NA, dim = c(dim(dat$y)[1], dim(dat$y)[2]))
 for(k in 1:dim(dat$y)[2]) {
-  d <- unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
+  d <- unmarked::unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
                          siteCovs = data.frame(gradient = dat$gradient))
-  res <- occu(~ date ~ gradient, data = d, se = TRUE)
-  z[,k] <- bup(ranef(res), stat = "mode")
+  res <- unmarked::occu(~ date ~ gradient, data = d, se = TRUE)
+  z[,k] <- unmarked::bup(unmarked::ranef(res), stat = "mode")
 }
 
 # Calculate CMs

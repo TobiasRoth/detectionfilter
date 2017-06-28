@@ -25,13 +25,13 @@ z <- array(NA, dim = c(dim(dat$y)[1], dim(dat$y)[2]))
 
 # Apply hierarchical model to all species seperate
 for(k in 1:dim(dat$y)[2]) {
-  d <- unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
+  d <- unmarked::unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
                          siteCovs = data.frame(gradient = dat$gradient))
-  res <- occu(~ date ~ gradient, data = d, se = TRUE)
-  z[,k] <- bup(ranef(res), stat = "mode")
+  res <- unmarked::occu(~ date ~ gradient, data = d, se = TRUE)
+  z[,k] <- unmarked::bup(unmarked::ranef(res), stat = "mode")
 }
 
-## ---- cache=TRUE, fig.height=4-------------------------------------------
+## ---- cache=TRUE, fig.height=5-------------------------------------------
 # Function to calculate mean trait expression of species in a community (CM)
 CM <- function(x) mean(dat$traitmat[x])
 
@@ -69,14 +69,14 @@ sum(apply(dat$z_true, 2, sum)>0)
 # Proportion of  species observed at least once but in less than 10% of sites
 mean(apply(commat_obs, 2, sum) < 20)
 
-## ---- message=FALSE, warning=FALSE, cache=TRUE---------------------------
+## ---- message=FALSE, warning=FALSE, cache=TRUE, fig.height=5-------------
 # Estimate detection-corrected meta-community matrix
 z <- array(NA, dim = c(dim(dat$y)[1], dim(dat$y)[2]))
 for(k in 1:dim(dat$y)[2]) {
-  d <- unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
+  d <- unmarked::unmarkedFrameOccu(y = dat$y[,k,], obsCovs = list(date = dat$date),
                          siteCovs = data.frame(gradient = dat$gradient))
-  res <- occu(~ date ~ gradient, data = d, se = TRUE)
-  z[,k] <- bup(ranef(res), stat = "mode")
+  res <- unmarked::occu(~ date ~ gradient, data = d, se = TRUE)
+  z[,k] <- unmarked::bup(unmarked::ranef(res), stat = "mode")
 }
 
 # Calculate CMs

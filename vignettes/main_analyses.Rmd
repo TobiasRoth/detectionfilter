@@ -236,6 +236,7 @@ round(summary(mod1)$coef, 3)
 
 Functional ecology is often conducted along environmental gradient. We therefore asked whether the strength of detection filtering is changing along the elevational gradient. For each community we thus calculate the average species' detection probability of the species truely occurring in the communities and plot average detection probability of a community along the elevational gradient (Fig 1a). This pattern 
 
+
 ```{r}
 # Community mean of species' detection probabilities
 CM_P_cor <- apply(z, 1, function(x) mean(P[x==1], na.rm = TRUE))
@@ -247,21 +248,20 @@ Nocc_obs <- apply(z, 2, sum)
 Av_Spec_occ <- apply(z, 1, function(x) mean(Nocc[x==1], na.rm = TRUE))
 ```
 
-
 ```{r fig1, cache=TRUE, fig.width = 7, fig.height = 3.5, echo=FALSE}
+
 # (a) Plot average species' detection probability of communities along elevation
-par(mfrow = c(1, 2), mar = c(2.5, 4, 1, 1), oma = c(1, 1, 1, 1))
+par(mfrow = c(1, 2), mar = c(2.5, 4, 1, 1))
 elrange <- 250:2750
-nsim <- 10
+nsim <- 100
 d <- data.frame(cbind(ele = plantsBDM$elevation, dep = CM_P))
-plot(d$ele, d$dep, axes = FALSE, pch = 21, cex = 0.5, col = "grey50", bg = "grey80",
+plot(d$ele, d$dep, pch = 16, cex = 0.4, axes = FALSE, 
      ylim = c(0.4, 0.8), xlim = c(250, 2750),  ylab = "", xlab = "")
 axis(side=1, at = seq(250, 2750, 250), labels = rep("", 11), pos=0.4)
 mtext(seq(500, 2500, 500), 1, at = seq(500, 2500, 500), cex = 0.7)
 axis(side = 2, at = seq(0.4, 0.8, 0.05), labels = rep ("", 9), pos = 250)
 mtext(seq(0.4, 0.8, 0.1), 2, at = seq(0.4, 0.8, 0.1), cex = 0.7, las = 1)
 mtext(text = "Elevation", side = 1, line = 1, cex = 0.7)
-mtext(text = "Average species' detection\nprobability", side = 2, line = 1, cex = 0.7)
 mtext(text = "(a) Community average of speices' detection probability", side = 3, at = -420, line = 1, cex = 0.7, adj = 0)
 avSR_cor <- round(mean(apply(z, 1, sum, na.rm = TRUE)),0)
 tmp <- numeric(nsim)
@@ -297,7 +297,6 @@ for(s in 1:nsim) {
 }
 points(elrange, apply(simres, 1, quantile, probs = 0.025), ty = "l", lty = 2)
 points(elrange, apply(simres, 1, quantile, probs = 0.975), ty = "l", lty = 2)
-
 # tf <- function(x) {
 #   tt <- range(plantsBDM$elevation[x==1])
 #   tt[2] - tt[1]

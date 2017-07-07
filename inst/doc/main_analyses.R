@@ -3,21 +3,14 @@
 
 ## ---- echo=TRUE, message=FALSE, warning=FALSE----------------------------
 library(detectionfilter)  
-library(missForest)
 library(RColorBrewer)
+library(missForest)
 library(geometry)
 library(mgcv)
 library(FD)
 
 ## ------------------------------------------------------------------------
-# Proportion of species occuring on at least 23 plots
-round(mean(d$nobs >= 23), 3)
-
-# Linear model only for common species
-round(summary(lm(qlogis(P) ~ sla + ch + sm, data = d[d$nobs >= 23, ]))$coef, 3)
-
-## ------------------------------------------------------------------------
-f.plotFD <- function(d, title, tylab, ymin = -0.75, leg.cex = 0.8,
+f.plotFD <- function(d, title, tylab, ymin = -0.75, leg.cex = 0.8, lxtext = 3,
                      ymax = 0.5, tticks = 0.25, yleg = c(-0.475, -0.59), xleg = c(350, 300)) {
   ele <- 400:2500
   xax <- seq(250, 2750, 250)
@@ -36,15 +29,18 @@ f.plotFD <- function(d, title, tylab, ymin = -0.75, leg.cex = 0.8,
   points(ele, pred, ty = "l")
   axis(side=1, at = xax, labels = rep("", length(xax)), pos=ymin)
   mtext(seq(500,2500,500), 1, at = seq(500,2500,500), cex = 0.7)
-  axis(side = 2, at = round(seq(ymin, ymax, tticks), 2), pos = 250, las = 1)
-  mtext(text = tylab, side = 2, line = 3, cex = 0.7)
+  axis(side = 2, at = seq(ymin, ymax, tticks), pos = 250, las = 1, 
+       labels = rep("", length(seq(ymin, ymax, tticks))))
+  mtext(round(seq(ymin, ymax, tticks), 2), 2, at = seq(ymin, ymax, tticks), 
+        cex = 0.7, las = 1)
+  mtext(text = "Elevation", side = 1, line = 1, cex = 0.7)
+  mtext(text = tylab, side = 2, line = lxtext, cex = 0.7)
   mtext(text = title, side = 3, at = -420, line = 1.5, cex = 0.8, adj = 0)
   legend(xleg[1], yleg[1], c("     underestimated values", 
-                      "     overestimated values"), col = tcol[1:2], 
+                             "     overestimated values"), col = tcol[1:2], 
          bty = "n", cex = leg.cex, pch = c(16,16), pt.cex = 1, y.intersp=0.8)
   legend(xleg[2], yleg[2], c("prediction from observed communities", 
-                       "detection corrected prediction"), 
+                             "detection corrected prediction"), 
          bty = "n", cex = leg.cex, lty = c(2,1), y.intersp=0.8)
 }
-
 

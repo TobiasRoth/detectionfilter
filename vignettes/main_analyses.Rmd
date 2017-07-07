@@ -21,8 +21,8 @@ The presented code depends on the following packages.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 library(detectionfilter)  
-library(missForest)
 library(RColorBrewer)
+library(missForest)
 library(geometry)
 library(mgcv)
 library(FD)
@@ -31,7 +31,7 @@ library(FD)
 ## Data from the Swiss Biodiversity monitoring (BDM)
 The `detectionfilter` package contains the data of the plant surveys from the Swiss biodiversity monitoring (`plantsBDM`). The array `y[i,k,j]` contains the detection-non detection data of the `i=1,2,...,362` $1-km^{2}$ plots, the `k=1,2,...,1733` observed plant species and the `j=1,2` visits. Furthermore, `plantsBDM` contains the median elevation for each plot (`elevation`), as well the dates (Julian day) for each visit to the plots (`dates`).
 
-We call the assamblages of species that are occurring at a plot a _community_. In the case of `plantsBDM` we speak of `meta-community` data because they contain observations of 362 communities. Further note, that `y[i,k,j]` contain the information whether or not a species was _observed_. If we refer to _occurrence_ we mean the true occurence that is not directly observable during a survey because we are not necessarily detect all species.
+We call the assamblages of species that are occurring at a plot a _community_. In the case of `plantsBDM` we speak of `meta-community` data because they contain observations of 362 communities. Further note, that `y[i,k,j]` contain the information whether or not a species was _observed_. If we refer to _occurrence_ we mean the true occurence that is not directly observable during a survey because we are not detect all species.
 
 ```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # Number of plots, species and visits
@@ -73,7 +73,7 @@ nrec <- apply(apply(plantsBDM$y, c(1,2), max), 2, sum)
 apply(traitmat_NA, 2, function(x) sum(as.integer(!is.na(x)) * nrec) / sum(nrec))
 ```
 
-In our data set, up to 35% of values were missing for any particular trait. We therefore imputed missing values using random forest estimation implemented in the R package `missForest` (Stekhoven & Buhlmann 2012).
+In our data set, up to 35% of species had missing values for any particular trait. We therefore imputed missing values using random forest estimation implemented in the R package `missForest` (Stekhoven & Buhlmann 2012).
 
 ```{r, message=FALSE, warning=FALSE, cache=TRUE, results='hide'}
 # Nonparametric missing value imputation using random forest
@@ -115,9 +115,9 @@ traitmat_NA$sm <- scale(log(traitmat_NA$sm+0.1))[,1]
 ```
 
 # Estimating detection-corrected meta-community
-To estimate the true occurrence of all species `k` at plot `i` we applied a single season occupancy model to all species separately (MacKenzie et al. 2002). Note that although fieldwork was conducted from 2010 to 2014 each plot was visited only during a single year. That is why a single season occupancy model seemed a sensible choice. Further note that during a single year, the surveyed plots were visited twice. Repeated visits of plots during a single season is a prerequisite to apply single season occupancy models that can account for imperfect detection (MacKenzie 2002).
+To estimate the true occurrence of all species denoted as `k` at all plots denoted as `i` we applied a single season occupancy model to all species separately (MacKenzie et al. 2002). Note that although fieldwork was conducted from 2010 to 2014 each plot was visited only during a single year. That is why a single season occupancy model seemed a sensible choice. Further note that during a single year, the surveyed plots were visited twice. Repeated visits of plots during a single season is a prerequisite to apply single season occupancy models that can account for imperfect detection (MacKenzie 2002).
 
-First we transformed the predictor variables to be small values that are distributed around 0. The reason for this is mainly computational. 
+First we transformed the predictor variables to be small values. The reason for this is mainly computational. 
 
 ```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # Standardize Julian dates and elevation
@@ -127,7 +127,8 @@ dates <- plantsBDM$dates
 dates <- (dates - 200) / 7
 ```
 
-Only select species with more than three observations
+Since for some of the species with less than four observations the algorithm of the single season occupancy model failed to congerge, we only analysed species with at least four observations. We thus remove the `r sum(apply(commat_obs, 2, sum) <= 3)` species that are `r round(100 * sum(apply(commat_obs, 2, sum) <= 3) / nspec, 1)`% of all recorded species.
+
 ```{r, cache = TRUE}
 selspec <- apply(commat_obs, 2, sum) > 3
 commat <- commat_obs[, selspec]
@@ -140,13 +141,11 @@ Now, we are ready to apply the occupancy model for each species separately. A co
 
 1. The function `unmarkedFrameOccu()` of the package `unmarked` is used to bundle the data needed for the single season occupancy model. These are the observations `y[i,j]` that contains 1 if the species was observed in plot `i` during visit `j`, or 0 otherwise. Note that `plantsBDM$y` is three dimensional because it contains the observations for all species. Further, the matrix `dates[i,j]` contains the Julian day when visit `j` was conducted to plot `i` and the vector `ele[i]` that contains the elevation for each plot `i`.
 
-2. The function `occu()` of the package `unmarked` is used to apply the single-season occupancy model to the data. Note that to the right of the first `~` the predictors for the detection probability are added and to the right of the second `~` the predictors for occurrence are added. Since detection probability is likely to depend on phenology, and because phenology changes with elevation, we used the survey date (linear and quadratic terms) as well as their interactions with elevation as predictors for detection probability (Chen et al. 2013). Further, because of the large elevational gradient, we incorporated the linear and quadratic terms of elevation of the plots as predictors for occurrence (Chen et al. 2013). 
+2. The function `occu()` of the package `unmarked` is used to apply the single-season occupancy model to the data. Note that to the right of the first `~` the predictors for the detection probability are added and to the right of the second `~` the predictors for occurrence are added. Since detection probability is likely to depend on phenology, we used the survey date (linear and quadratic terms) as predictors for detection probability (Chen et al. 2013). Further, because of the large elevational gradient, we incorporated the linear and quadratic terms of elevation of the plots as predictors for occurrence (Chen et al. 2013). 
 
-3. Some species were observed only at very few plots that leads to an error of the `occu()` function because the algorithm did not converge. In order to avoid that the calculation stops at this point we put the `try()` function around these calculations.
+3. We estimated the average detectability of a species (`Pi[k]`), which is independent of the true distribution of the species, by assuming that the species was present on all  plots. We averaged the probabilities of detecting the species during at least one of the two surveys across all plots.
 
-4. We estimated the average detectability of a species (`Pi[k]`), which is independent of the true distribution of the species, by assuming that the species was present on all  plots. We averaged the probabilities of detecting the species during at least one of the two surveys across all plots.
-
-5. A single season occupancy model is a hierarchical model in the form of `f(y[i,j]|z[i])` were `z[i]` is the true species presence at plot `i`. The function `ranef()` estimates posterior distributions of the `z` using empirical Bayes methods. Finally, we use  the function `bup()` to extract the mode of the posterior probability.
+4. A single season occupancy model is a hierarchical model in the form of `f(y[i,j]|z[i])` were `z[i]` is the true species presence at plot `i`. The function `ranef()` estimates posterior distributions of the `z` using empirical Bayes methods. Finally, we use  the function `bup()` to extract the mode of the posterior probability.
 Both functions are from the package `unmarked`. 
 
 ```{r fun-per-spec, cache=TRUE}
@@ -155,30 +154,23 @@ f.speccalc <- function(k) {
   # Bundle data
   d <- unmarkedFrameOccu(y = y[,k,], obsCovs = list(dates = dates), 
                          siteCovs = data.frame(ele = ele))
-  Pi <- NA
-  z <- rep(NA, nplots)
+
+  # Apply single season occupancy model
+  res <- occu(~ dates + I(dates^2) ~ ele + I(ele^2), data = d, se = FALSE)
   
-  # Use try() to avoid that calculation stops when something gets wrong for one species
-  try({
-    # Apply single season occupancy model
-    res <- occu(~ dates + I(dates^2) ~ ele + I(ele^2), data = d, se = FALSE)
-    
-    # Calculate species' average detection probability
-    p <- predict(res, type = 'det')$Predicted
-    Pi <- mean(1-((1-p[1:nplots])*(1-p[(nplots+1):(2*nplots)])))
-    
-    # Mode of posterior probability for species occurrence using empirical Bayes
-    z <- bup(unmarked::ranef(res), stat = "mode")
-    
-  })   
+  # Calculate species' average detection probability
+  p <- predict(res, type = 'det')$Predicted
+  Pi <- mean(1-((1-p[1:nplots])*(1-p[(nplots+1):(2*nplots)])))
   
+  # Mode of posterior probability for species occurrence using empirical Bayes
+  z <- bup(unmarked::ranef(res), stat = "mode")
+
   # Return results
   list(Pi = Pi, z = z)
 }
 ```
 
-We now are ready to apply the analyses for each species separately. However, to reduce the time needed to run the analyses we decided to use a function analogous to the `lapply()` function that is able to run the calculations for species in parallel. We thus used the `parLapply()` function of the package `parallel`. 
-
+We now are ready to apply the analyses for each species separately. However, to reduce the time needed to run the analyses we decided to use a function analogous to the `lapply()` function that is able to run the calculations for species in parallel. We thus used the `parLapply()` function of the package `parallel`. Note that it takes around 10 minutes (depending on the computer) to make the calculations for all species.
 
 ```{r occu-per-spec, cache=TRUE}
 # Get the number of cores on the computer used for the calculations
@@ -188,6 +180,8 @@ no_cores <- detectCores()
 cl <- makeCluster(no_cores, type="FORK")
 resoccu <- parLapply(cl, 1:sum(selspec), f.speccalc)
 stopCluster(cl)
+
+# Save image at this point
 save.image("deteccor.RDATA")
 ```
 
@@ -199,31 +193,12 @@ z <-  sapply(resoccu, function(x) x$z)
 ncol(z)
 ```
 
-The `occu()` function successfully calculated average detection probability and true occurrences for `r ncol(z)` of the totally `r nspec` species. Thus, `r ncol(z)` (`r round(100*(ncol(z))/nspec, 1)`%) species have to be removed from analyses because the estimated true occurence is not available. In average these removed species were observed only at `r round(mean(apply(commat_obs, 2, sum)[is.na(apply(z, 2, sum))]),1)` plots.
-
-Since we were not able to estimate the true occurrence for all species, we have to make sure that observed meta-community, detection corrected meta-community and trait matrices contains exactly the same species.
-
-```{r, cache=TRUE}
-# Remove species for which occupancy model did not converge
-# commat <- commat_obs[, apply(z, 2, function(x) sum(is.na(x))==0)]
-# traitmat_NA <- traitmat_NA[apply(z, 2, function(x) sum(is.na(x))==0), ]
-# traitmat <- traitmat[apply(z, 2, function(x) sum(is.na(x))==0), ]
-# z <- z[, apply(z, 2, function(x) sum(is.na(x))==0)]
-# P <- P[!is.na(P)]
-# selspec <- apply(commat_obs, 2, sum) > 3
-# commat <- commat_obs[, selspec]
-# traitmat_NA <- traitmat_NA[selspec, ]
-# traitmat <- traitmat[selspec, ]
-# z <- z[, selspec]
-# P <- P[selspec]
-```
-
-Now, both `commat` and `z` contain `r nrow(commat)` rows for each plot and `r ncol(commat)` columns for each species for which true occurrences were estimated.
+The `occu()` function successfully calculated average detection probability and true occurrences for `r ncol(z)` of the totally `r nspec` species. 
 
 # Detection filtering
 
 ## Predictors of species' detection probability
-We define detection filtering as any methodological process that selects the species that are observed from the local community depending on the expression of their functional trait. This implies that the species' detection probability is related to the trait values of the species. To test for this, we applied a linear model with the logit-transformed ($log(\frac{p}{1-p})$) average species' detection probability as the dependent variable and the specific leaf area, the canopy height and the seed mass as predictor variables.
+We define detection filtering as any methodological process that selects the species that are observed from the local community depending on the expression of their functional trait. This implies that the species' detection probability is related to the trait values of the species. To test for this, we applied a linear model with the logit-transformed ($log(\frac{p}{1-p})$) average species' detection probability as the dependent variable and the specific leaf area, the canopy height and the seed mass as predictor variables. Furthermore, we expected that widespread species are also locally common and are thus easier to detect than species with a small range. We thus used the number of occurrences per species as an other predictor for species' detection probabilities. Finally, we added the average elevation of species occurence as a predictor to test whether the detection probability of lowland species differes from alpine species.
 
 ```{r, cache=TRUE}
 # Prepare data.frame with all data for linear model
@@ -243,14 +218,12 @@ d$meanel_sd <- as.vector(scale(log(d$meanel+1)))
 # Linear model
 mod <- lm(qlogis(P) ~ sla + ch + sm + nocc_sd + meanel_sd, data = d)
 round(summary(mod)$coef, 3)
-
-summary(lm(plantsBDM$dates$Dat2 - plantsBDM$dates$Dat1 ~ plantsBDM$elevation))
-
 ```
 
 The intercept corresponds to the species' detection probability at the logit scale of a plant species with average trait expression. On the probability scale this corresponds to a detection probability of `r round(plogis(coef(mod)[1]),2)`. If the functional trait is increased by one standard deviation detection probability increases to `r round(plogis(coef(mod)[1] + coef(mod)["ch"]), 2)` for canopy height, to `r round(plogis(coef(mod)[1] + coef(mod)["sm"]), 2)` for seed mass, and decreased to `r round(plogis(coef(mod)[1] + coef(mod)["sla"]), 2)` for specific leaf area.  
 
 ## Detection filtering at the community level
+In average only about `r round(100*mean(apply(commat, 1, sum)/apply(z, 1, sum)), 1)`% of the species in of detection corrected communities were actually observed. This proportion changed along the elevational gradient (Fig. 1a). We also calculate for each species the mean elevation of its occurrence and the number of plots with occurrence. We then calculated the community mean of mean elevation and number of occurences of all observed species and of all overseen species (i.e. the species that were estimated to occurre but that were not seen) and make the plots.
 
 ```{r, cache=TRUE}
 
@@ -271,7 +244,6 @@ occ.cor <- apply(z != commat, 1, function(x) mean(tmp[x==1]))
 ```
 
 
-
 ```{r fig1, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
 # Plot settings
 par(mfrow = c(1, 3), mar = c(2.5,4,3,1.5), oma = c(1,1,1,1))
@@ -281,7 +253,7 @@ tcol <- brewer.pal(8, "Set1")
 d <- data.frame(SR.obs = SR.obs, SR.cor = SR.cor, prop = SR.obs/SR.cor, meanel.cor=meanel.cor, meanel.obs=meanel.obs,
                 occ.obs = occ.obs, occ.cor = occ.cor, elevation = plantsBDM$elevation)
 
-# Proportion of recorded sepcies
+# Proportion of observed sepcies
 plot(d$elevation, d$prop, ylim = c(0.7, 1), xlim = c(250,2750),
      pch = 21, cex = 0.8, axes=F, xlab = "", ylab = "", col = "grey50", bg = "grey80")
 pred <- predict(gam(prop ~ s(elevation), data = d),
@@ -292,8 +264,8 @@ mtext(seq(500,2500,500), 1, at = seq(500,2500,500), cex = 0.7)
 axis(side = 2, at = seq(0.7, 1, 0.05), pos = 250, las = 1, labels = rep("", 7))
 mtext(seq(0.7, 1, 0.05), 2, at = seq(0.7, 1, 0.05), cex = 0.7, las = 1)
 mtext(text = "Elevation", side = 1, line = 1, cex = 0.7)
-mtext(text = "Proportion of recorded species", side = 2, line = 3, cex = 0.7)
-mtext(text = "(a) Proportion of recorded species\n", side = 3, at = -420, line = 1.5, cex = 0.8, adj = 0)
+mtext(text = "Proportion of observed species", side = 2, line = 3, cex = 0.7)
+mtext(text = "(a) Proportion of observed species\n", side = 3, at = -420, line = 1.5, cex = 0.8, adj = 0)
 
 # Mean elevation
 plot(d$elevation, d$meanel.obs, ylim = c(500, 2000), xlim = c(250,2750),
@@ -335,6 +307,22 @@ mtext(text = "(c) Community mean of species' occurrences\n", side = 3, at = -420
 legend(300, 80, c("observed communities", "overseen species"),
        bty = "n", cex = 0.8, lty = 1, y.intersp=0.8, col = tcol[1:2], pch = 16)
 ```
+**Fig. 1:** (a) Change of the proportion of occurring species that were observed along the elevational gradient. (b) Mean elevation of species occurrence averaged for observed species (red points) and species that were estimated to occur in a community but that were not detected (i.e. overseen species, blue points). (c) Number of occurrences per species averaged for observed species (red points) and overseen species (blue points). The lines represent the predictions from the generalized additive model (GAM).
+
+
+```{r, cache=TRUE}
+# Species that remain most often undetected at communities below 750m
+undet <- apply(z[plantsBDM$elevation < 750, ] != commat[plantsBDM$elevation < 750, ], 2, sum)
+row.names(traitmat)[order(undet, decreasing = TRUE)][1:2]
+
+# Species that remain most often undetected at communities between 900m and 1100m
+undet <- apply(z[plantsBDM$elevation > 750 & plantsBDM$elevation < 1250, ] !=
+                 commat[plantsBDM$elevation > 750 & plantsBDM$elevation < 1250, ], 2, sum)
+row.names(traitmat)[order(undet, decreasing = TRUE)][1:2]
+
+
+```
+In communities below 750m, the species that most often remain undetected were Buglossoides arvensis (species-ID: 1575) a weed of arable land and Helianthus tuberosus (species ID 2094) a currently spreading invasive species with late flowering. 
 
 
 # Community composition and diversity along elevational gradient
@@ -426,7 +414,7 @@ d <- data.frame(cbind(obs=CM.sm.obs, cor=CM.sm.cor, dif = dif.sm, elevation = pl
 f.plotFD(d, "(c) Seed mass", "Normalized log-transformed seed mass")
 ```
 
-**Fig. 1:** Change of community means (CMs) of log-transformed and normalized (z-score) trait values along the elevational gradient for the three functional traits (a) specific leaf area, (b) canopy height and (c) seed mass. Points give CMs of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates of CMs more than the change of community composition we observe per 500m along the elevational gradient (red points: observed CMs are lower than detection-corrected CMs; blue points: observed CMs are larger than detection-corrected CMs). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted line) and to the detection-corrected communities (solid line).
+**Fig. 2:** Change of community means (CMs) of log-transformed and normalized (z-score) trait values along the elevational gradient for the three functional traits (a) specific leaf area, (b) canopy height and (c) seed mass. Points give CMs of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates of CMs more than the change of community composition we observe per 500m along the elevational gradient (red points: observed CMs are lower than detection-corrected CMs; blue points: observed CMs are larger than detection-corrected CMs). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted line) and to the detection-corrected communities (solid line).
 
 ## Community diversity along elevational gradient
 We quantify functional diversity for each community as the multivariate convex hull volume, i.e. functional richness (FRic), and as the mean nearest neighbour distance, using the Euclidean distance between species in multivariate trait space (Swenson & Weiser 2014). 
@@ -461,7 +449,7 @@ SR.dif <- abs(SR.obs - SR.cor) > rel
 
 ```
 
-In average only about `r round(100*mean(SR.obs)/mean(SR.cor), 1)`% of the species in of detection corrected communities were actually observed. 
+
 
 Bias due to imperfect detection was relevant in `r round(100*mean(FRic.dif),1)`% of communities for functional richness, and in `r round(100*mean(mnnd.dif),1)`% of communities for functional packing. Nonetheless, correlation between estimates of observed and detection corrected communities was rather high (FRic: `r round(cor(FRic.cor, FRic.obs),3)`, mnnd: `r round(cor(mnnd.cor, mnnd.obs),3)`).
 

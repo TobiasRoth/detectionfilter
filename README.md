@@ -20,8 +20,8 @@
 <p>The latest version can be downloaded directly in R using:</p>
 
 <pre><code> library(devtools)
- install_github("TobiasRoth/detectionfilter”)
- library(detectionfilter)```
+ install_github("TobiasRoth/detectionfilter")
+ library(detectionfilter)
 </code></pre>
 
 <h2>Data</h2>
@@ -34,8 +34,10 @@
 
 <h2>Vignettes</h2>
 
-<p>The vignette that develops the ideas behind the simulation of the meta-community that can be used to test the presented methods to account for imperfect detection on functional divesity estimates along an environmental gradient:
-vignette("simdat", package="detectionfilter")</p>
+<p>The vignette that develops the ideas behind the simulation of the meta-community that can be used to test the presented methods to account for imperfect detection on functional divesity estimates along an environmental gradient:</p>
+
+<pre><code> vignette("simdat", package="detectionfilter")
+</code></pre>
 
 <p>The vignette that describes the workflow to estimate a detection-corrected meta-community from observations using the hierarchical models implemented in the r-package umarked:</p>
 
@@ -48,6 +50,7 @@ vignette("simdat", package="detectionfilter")</p>
 </code></pre>
 
 <h2>Modifications</h2>
+<p>07-Jul-2017  First working version of package with a first draft of all vignettes, functions and data files. [Version 0.1.1](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.1).
 
 <p>10-Aug-2017  Edit of main_analyses.Rmd, including minor changes to graphs and clarification of text.  Some questions are inserted IN CAPS and need to be addressed. Addition of README.txt, modification of .gitignore</p>
 

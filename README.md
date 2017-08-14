@@ -50,7 +50,7 @@
 </code></pre>
 
 <h2>Modifications</h2>
-<p>07-Jul-2017  First working version of package with a first draft of all vignettes, functions and data files. [Version 0.1.1](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.1).
+<p>07-Jul-2017  First working version of package with a first draft of all vignettes, functions and data files. [Version 0.1.1](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.1).</p>
 
 <p>10-Aug-2017  Edit of main_analyses.Rmd, including minor changes to graphs and clarification of text.  Some questions are inserted IN CAPS and need to be addressed. Addition of README.txt, modification of .gitignore</p>
 

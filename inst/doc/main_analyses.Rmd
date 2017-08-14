@@ -11,7 +11,7 @@ vignette: >
 
 # Introduction
 ## Prerequisite
-This vignette presents analyses from Roth, Allan, Pearman and Amrhein (year) "Functional ecology and imperfect detection of species". The latest version of the package `detecionfilter` is required to run the code and should be downloaded from github.
+This vignette presents analyses from Roth, Allan, Pearman and Amrhein (under revision) "Functional ecology and imperfect detection of species". The latest version of the package `detecionfilter` is required to run the code and should be downloaded from github (make sure you have the package `devtools` installed).
 
 ```{r, eval=FALSE}
 devtools::install_github("TobiasRoth/detectionfilter")
@@ -194,6 +194,7 @@ ncol(z)
 
 The `occu()` function successfully calculated average detection probability and true occurrences for `r ncol(z)` of the totally `r nspec` species. 
 
+
 # Detection filtering
 
 ## Predictors of species' detection probability
@@ -228,6 +229,7 @@ difdays <- plantsBDM$dates$Dat2 - plantsBDM$dates$Dat1
 round(summary(lm(difdays ~ I(plantsBDM$elevation/100)))$coef, 3)
 ```
 On average `r round(mean(difdays), 1)` days separated the first and second visits to the plots. This difference was fairly constant along the elevational gradient. 
+
 
 ## Detection filtering at the community level
 Correction of community composition for imperfect species detection (to estimate 'detection corrected communities') shows that on average about `r round(100*mean(apply(commat, 1, sum)/apply(z, 1, sum)), 1)`% of occurring species are actually observed. The actual proportion depends on community elevation (Fig. 1a). For each species we calculate the mean elevation of its occurrences ('species mean elevation'), and we average these values for the species occurring in each community. Then considering only the subset of species in each community that have unobserved occurrences (the overlooked species), we again average the values of species mean elevation. We plot both these sets of average elevations against community elevation (Fig. 1b). We then calculate the number of occurrences of each species and use these to generate average values of species occurrence for each community. Again we consider only the overlooked species in each community, and generate the average number of occurrences of these species. Both these sets of values are plotted against community elevation (Fig. 1c).
@@ -332,8 +334,6 @@ row.names(traitmat)[order(undet, decreasing = TRUE)][1:2]
 In communities below 750m, the species that most often remain undetected were *Buglossoides arvensis* (species-ID: 1575) a weed of arable land and *Helianthus tuberosus* (species ID 2094) a currently spreading invasive species with late flowering. 
 
 
-
-
 # Community composition and diversity along elevational gradient
 In this chapter we will calculate functional composition (i.e. single trait measures such as community mean)  and diversity (i.e. multi trait measures) from observed (`commat`) and detection-corrected meta-community (`z`). Differnces between measures from observed and detection-corrected communities should be due to detection filtering.
 
@@ -370,8 +370,9 @@ Bias due to detection filtering was relevant in `r round(100*mean(dif.sla),1)`% 
 We define a function `f.plotFD()` to plot observed community means along the elevational gradient.
 
 ```{r}
-f.plotFD <- function(d, title, tylab, ymin = -0.75, leg.cex = 1.2, lxtext = 3,
-                     ymax = 0.5, tticks = 0.25, yleg = c(-0.475, -0.59), xleg = c(350, 300)) {
+f.plotFD <- function(d, title, tylab, ymin = -0.75, leg.cex = 0.8, lxtext = 3,
+                     ymax = 0.5, tticks = 0.25, yleg = c(-0.475, -0.59), 
+                     xleg = c(350, 300)) {
   ele <- 400:2500
   xax <- seq(250, 2750, 250)
   tcol <- brewer.pal(8, "Set1")
@@ -410,6 +411,7 @@ Now we apply the function to the community means of each trait separately.
 ```{r fig2, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
 # Plot settings
 par(mfrow = c(1, 3), mar = c(2.5,4,3,1.5), oma = c(1,1,1,1))
+
 # Specific leaf area (SLA)
 d <- data.frame(cbind(obs=CM.sla.obs, cor=CM.sla.cor, dif = dif.sla, elevation = plantsBDM$elevation))
 f.plotFD(d, "(a) Specific leaf area", "Normalized log-transformed specific leaf area")
@@ -423,9 +425,8 @@ d <- data.frame(cbind(obs=CM.sm.obs, cor=CM.sm.cor, dif = dif.sm, elevation = pl
 f.plotFD(d, "(c) Seed mass", "Normalized log-transformed seed mass")
 ```
 
-**Fig. 2:** Change of community means (CMs) of log-transformed and normalized (z-score) trait values along the elevational gradient for the three functional traits: (a) specific leaf area, (b) canopy height and (c) seed mass. Points give CMs of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates of CMs more than the change of community composition we observe per 500m along the elevational gradient (red points: observed CMs are lower than detection-corrected CMs; blue points: observed CMs are larger than detection-corrected CMs). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted line) and to the detection-corrected communities (solid line).
+**Fig. 2:** Change of community means (CMs) of log-transformed and normalized (z-score) trait values along the elevational gradient for the three functional traits: (a) specific leaf area, (b) canopy height and (c) seed mass. Points give CMs of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates of CMs more than the change of community composition we observe per 100m along the elevational gradient (red points: observed CMs are lower than detection-corrected CMs; blue points: observed CMs are larger than detection-corrected CMs). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted line) and to the detection-corrected communities (solid line).
 
-NOTE: ON LINE 343, RELEVANT EFFECT OF IMPERFECT DETECTION WAS DEFINED AS BEING GREATER THAN EFFECT OF ELEVATION PER 100m. HERE YOU USE 500m.  THESE TWO VALUES SHOULD LIKELY BE IDENTICAL, SINCE RELEVANCE HAS BEEN EXPLICITLY DEFINED, RIGHT? see lines 345-365.
 
 ## Community diversity along elevational gradient
 We quantify functional diversity for each community as the multivariate convex hull volume, i.e. functional richness (FRic), and as the mean nearest neighbour distance, using the Euclidean distance between species in multivariate trait space (Swenson & Weiser 2014). 
@@ -456,19 +457,16 @@ SR.obs <- apply(commat, 1, sum)
 SR.cor <- apply(z, 1, sum)
 rel <- 100 * abs(lm(SR.obs ~ plantsBDM$elevation)$coef[2])
 SR.dif <- abs(SR.obs - SR.cor) > rel
-
-
 ```
 
 Bias due to imperfect detection was relevant in `r round(100*mean(FRic.dif),1)`% of communities for functional richness, and in `r round(100*mean(mnnd.dif),1)`% of communities for functional packing. Nonetheless, correlation between estimates of observed and detection corrected communities was high (FRic: `r round(cor(FRic.cor, FRic.obs),3)`, mnnd: `r round(cor(mnnd.cor, mnnd.obs),3)`).
 
-DO YOU WANT TO SAY SOMETHING HERE ABOUT SR (TAXONOMIC RICHNESS) AS WELL, SINCE IT WAS JUST CALCULATED ABOVE WITH THE OTHER INDICES??  IT SEEMS TO BE MISSING HERE.
-
+While occupancy models adds unobserved species that were estimated to be occurring to the detection-corrected communities, they assume that false-positives (i.e. observations of species that do not occcur) do not occur. Consequently taxonomic richness of observed communities is an underestimation of the true community species richness along the entire elevational gradient.
 
 We again use the `f.plotFD()` function to make the plots for functional richness, functional packing and species richness.
 
 ```{r fig3, cache=TRUE, fig.width = 10, fig.height = 3.5, echo = FALSE}
-# Plot settings
+# Plot settings 
 par(mfrow = c(1, 3), mar = c(2.5,4,3,1.5), oma = c(1,1,1,1))
 
 # Functional richness
@@ -487,7 +485,7 @@ f.plotFD(d, "(c) Taxonomic richness", "Number of species",
          ymin = 0, ymax = 500, tticks = 100, yleg = c(100, 55))
 ```
 
-**Fig. 3:** Changes in (a) functional richness (convex hull volume of the three functional dimensions’ specific leaf area, canopy height and seed mass) (b) functional packing (mean nearest neighbour distance) and (c) taxonomic diversity (number of species) along the elevational gradient. Points give the estimates of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates more than the change of community diversity we observe per 500m along the elevational gradient (red points: observed estimates are below the detection-corrected estimates; blue points: observed estimates are above the detection-corrected estimates). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted lines) and to the detection-corrected communities (solid line).
+**Fig. 3:** Changes in (a) functional richness (convex hull volume of the three functional dimensions’ specific leaf area, canopy height and seed mass) (b) functional packing (mean nearest neighbour distance) and (c) taxonomic diversity (number of species) along the elevational gradient. Points give the estimates of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates more than the change of community diversity we observe per 100m along the elevational gradient (red points: observed estimates are below the detection-corrected estimates; blue points: observed estimates are above the detection-corrected estimates). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted lines) and to the detection-corrected communities (solid line).
 
 
 # References

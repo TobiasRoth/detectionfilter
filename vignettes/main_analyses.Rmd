@@ -2,7 +2,9 @@
 title: "Analyses of plants data from the Swiss Biodiversity Monitoring (BDM)"
 author: "Tobias Roth, Eric Allan, Peter B. Pearman and Valentin Amrhein"
 date: "`r Sys.Date()`"
-output: rmarkdown::pdf_document
+output: 
+  rmarkdown::pdf_document:
+        toc: true  
 vignette: >
   %\VignetteIndexEntry{Analyses of plants data from the Swiss Biodiversity Monitoring (BDM)"}
   %\VignetteEngine{knitr::rmarkdown}
@@ -31,7 +33,7 @@ library(FD)
 ## Data from the Swiss Biodiversity monitoring (BDM)
 The `detectionfilter` package contains a data set of plant surveys from the Swiss biodiversity monitoring (`plantsBDM`) program. The array `y[i,k,j]` contains the detection/non-detection data of `i=1,2,...,362` $1km^{2}$ plots, the `k=1,2,...,1733` observed plant species and the `j=1,2` visits. `plantsBDM` also contains the median elevation for each plot (`elevation`), as well the dates (Julian day) of each visit to the plots (`dates`).
 
-We call the assamblages of species that occur at a plot a _community_. In the case of `plantsBDM` we speak of `meta-community` data because the data set contains observations of 362 communities. Further, note that the array `y[i,k,j]` contains information on whether or not a species was _observed_. When we refer to species _occurrence_, we mean the true occurence state of the species, which is not directly observable during a survey because of imperfect detection of species.
+We call the assemblages of species that occur at a plot a _community_. In the case of `plantsBDM` we speak of `meta-community` data because the data set contains observations of 362 communities. Further, note that the array `y[i,k,j]` contains information on whether or not a species was _observed_. When we refer to species _occurrence_, we mean the true occurrence state of the species, which is not directly observable during a survey because of imperfect detection of species.
 
 ```{r, message=FALSE, warning=FALSE, cache=TRUE}
 # Number of plots, species and visits
@@ -130,6 +132,10 @@ dates <- (dates - 200) / 7
 We analysed species with at least four detections because otherwise the algorithm implementing the single season occupancy model failed to converge consistently. We thus remove the `r sum(apply(commat_obs, 2, sum) <= 3)` species that are `r round(100 * sum(apply(commat_obs, 2, sum) <= 3) / nspec, 1)`% of all recorded species.
 
 ```{r, cache = TRUE}
+# Store full trait table sets with all species
+traitmat_all <- traitmat 
+
+# Select data from species with at least four observations 
 selspec <- apply(commat_obs, 2, sum) > 3
 commat <- commat_obs[, selspec]
 traitmat_NA <- traitmat_NA[selspec, ]
@@ -184,15 +190,13 @@ stopCluster(cl)
 save.image("deteccor.RDATA")
 ```
 
-Finally, we bundle the results into two objects: a vector `P` containing the average detection probability per species, and the detection-corrected meta-community matrix `z[i,k]` containing the (estimated) true occurence of species `k`at site `ì`.
+Finally, we bundle the results into two objects: a vector `P` containing the average detection probability per species, and the detection-corrected meta-community matrix `z[i,k]` containing the (estimated) true occurrence of species `k`at site `ì`.
 
 ```{r, cache=TRUE}
 P <- as.numeric(sapply(resoccu, function(x) x$Pi))
 z <-  sapply(resoccu, function(x) x$z)
 ncol(z)
 ```
-
-The `occu()` function successfully calculated average detection probability and true occurrences for `r ncol(z)` of the totally `r nspec` species. 
 
 
 # Detection filtering
@@ -325,17 +329,18 @@ Lets look at a few of the species that are responsible for these patterns.
 undet <- apply(z[plantsBDM$elevation < 750, ] != commat[plantsBDM$elevation < 750, ], 2, sum)
 row.names(traitmat)[order(undet, decreasing = TRUE)][1:2]
 
-# Species that remain most often undetected at communities between 900m and 1100m
+# Species that remain most often undetected at communities between 750m and 1250m
 undet <- apply(z[plantsBDM$elevation > 750 & plantsBDM$elevation < 1250, ] !=
                  commat[plantsBDM$elevation > 750 & plantsBDM$elevation < 1250, ], 2, sum)
-row.names(traitmat)[order(undet, decreasing = TRUE)][1:2]
+row.names(traitmat)[order(undet, decreasing = TRUE)][1]
 ```
 
-In communities below 750m, the species that most often remain undetected were *Buglossoides arvensis* (species-ID: 1575) a weed of arable land and *Helianthus tuberosus* (species ID 2094) a currently spreading invasive species with late flowering. 
+In communities below 750m, the species that most often remain undetected were *Buglossoides arvensis* (species-ID: 1575) a weed of arable land and *Helianthus tuberosus* (species ID 2094) a currently spreading invasive species with late flowering. The species that most often remained undetected in communities between 750m and 1250m was *Descurainia sophia* (species ID 613), a ruderal of fields and dry rock faces.
+
 
 
 # Community composition and diversity along elevational gradient
-In this chapter we will calculate functional composition (i.e. single trait measures such as community mean)  and diversity (i.e. multi trait measures) from observed (`commat`) and detection-corrected meta-community (`z`). Differnces between measures from observed and detection-corrected communities should be due to detection filtering.
+In this chapter we will calculate functional composition (i.e. single trait measures such as community mean)  and diversity (i.e. multi trait measures) from observed (`commat`) and detection-corrected meta-community (`z`). Differences between measures from observed and detection-corrected communities should be due to detection filtering.
 
 ## Detection filtering and community composition
 To estimate community functional composition, we calculated for each community the mean trait value across all species and did this separately for each of the three functional traits and for both the observed meta-community (`commat`) and the detection corrected meta-community (`z`). 
@@ -461,7 +466,7 @@ SR.dif <- abs(SR.obs - SR.cor) > rel
 
 Bias due to imperfect detection was relevant in `r round(100*mean(FRic.dif),1)`% of communities for functional richness, and in `r round(100*mean(mnnd.dif),1)`% of communities for functional packing. Nonetheless, correlation between estimates of observed and detection corrected communities was high (FRic: `r round(cor(FRic.cor, FRic.obs),3)`, mnnd: `r round(cor(mnnd.cor, mnnd.obs),3)`).
 
-While occupancy models adds unobserved species that were estimated to be occurring to the detection-corrected communities, they assume that false-positives (i.e. observations of species that do not occcur) do not occur. Consequently taxonomic richness of observed communities is an underestimation of the true community species richness along the entire elevational gradient.
+While occupancy models adds unobserved species that were estimated to be occurring to the detection-corrected communities, they assume that false-positives (i.e. observations of species that do not occur) do not occur. Consequently taxonomic richness of observed communities is an underestimation of the true community species richness along the entire elevational gradient.
 
 We again use the `f.plotFD()` function to make the plots for functional richness, functional packing and species richness.
 
@@ -486,6 +491,62 @@ f.plotFD(d, "(c) Taxonomic richness", "Number of species",
 ```
 
 **Fig. 3:** Changes in (a) functional richness (convex hull volume of the three functional dimensions’ specific leaf area, canopy height and seed mass) (b) functional packing (mean nearest neighbour distance) and (c) taxonomic diversity (number of species) along the elevational gradient. Points give the estimates of the 362 observed communities. Coloured points indicate communities where imperfect detection affected estimates more than the change of community diversity we observe per 100m along the elevational gradient (red points: observed estimates are below the detection-corrected estimates; blue points: observed estimates are above the detection-corrected estimates). The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted lines) and to the detection-corrected communities (solid line).
+
+
+# Effect of remooving rare species
+For all analyses we removed species that were observed at less than 4 sites. This is because it was not able to apply the hierarchical models to some of these species. To infer whether this may have impacted our results we calculated all measures of functional composition and diversity with and without missing species and infered how strong the measures were correlated. 
+
+```{r}
+# Specific leaf area (SLA)
+f <- function(x) mean(traitmat$sla[as.logical(x)])
+used <- apply(commat, 1, f)
+f <- function(x) mean(traitmat_all$sla[as.logical(x)])
+allobs <- apply(commat_obs, 1, f)
+cor(used, allobs)
+
+# Canopy height (CH)
+f <- function(x) mean(traitmat$ch[as.logical(x)])
+used <- apply(commat, 1, f)
+f <- function(x) mean(traitmat_all$ch[as.logical(x)])
+allobs <- apply(commat_obs, 1, f)
+cor(used, allobs)
+
+# Seed mass (SM)
+f <- function(x) mean(traitmat$sm[as.logical(x)])
+used <- apply(commat, 1, f)
+f <- function(x) mean(traitmat_all$sm[as.logical(x)])
+allobs <- apply(commat_obs, 1, f)
+cor(used, allobs)
+
+# Functional trait space (FRic)
+f <- function(x) convhulln(traitmat[as.logical(x),], "FA")$vol
+used <- apply(commat, 1, f)
+f <- function(x) convhulln(traitmat_all[as.logical(x),], "FA")$vol
+allobs <- apply(commat_obs, 1, f)
+cor(used, allobs)
+
+## Calculate distance matrix from complete trait matrix 
+dist_all <- as.matrix(dist(traitmat_all))
+
+# Mean nearest neighbout distance (mnnd)
+f <- function(x) {
+  sample.dis <- dist[as.logical(x),as.logical(x)]
+  mean(apply(sample.dis, 1, function(x) min(x[x>0])))
+}
+used <- apply(commat, 1, f)
+f <- function(x) {
+  sample.dis <- dist_all[as.logical(x),as.logical(x)]
+  mean(apply(sample.dis, 1, function(x) min(x[x>0])))
+}
+allobs <- apply(commat_obs, 1, f)
+cor(used, allobs)
+
+# Species richness SR
+used <- apply(commat, 1, sum)
+allobs <- apply(commat_obs, 1, sum)
+cor(used, allobs)
+```
+We found that measures of functional composition and diversity calculated from the observations of all `r ncol(commat_obs)` species were very strongly correlated with measures calculated from the `r ncol(commat)` species with at least four observations (all r > 0.995). We therefore confident that removing species with less than four observations did not strongly bias our results.
 
 
 # References

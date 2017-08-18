@@ -2,7 +2,9 @@
 title: "Accounting for imperfect detection in functional ecology using hierarchical models in R"
 author: "Tobias Roth, Eric Allan, Peter B. Pearman and Valentin Amrhein"
 date: "`r Sys.Date()`"
-output: rmarkdown::pdf_document
+output: 
+  rmarkdown::pdf_document:
+        toc: true  
 vignette: >
   %\VignetteIndexEntry{Accounting for imperfect detection in functional ecology using hierarchical models in R}
   %\VignetteEngine{knitr::rmarkdown}
@@ -73,7 +75,7 @@ Note, that the functions `ranef()` and `bup()` can be applied to all hierarchica
 
 But let's go on with the presence/absence data example. Say, we are interested in how the mean trait expression of the species in a community (i.e. community mean CM) changes along the gradient. We calculate CMs from observed meta-community, from the detection-corrected meta-community  and from the true meta-community. Note that the later we only know because we simulated the data. 
 
-```{r, cache=TRUE, fig.height=5}
+```{r fig1, cache=TRUE, fig.height=5, fig.width= 4}
 # Function to calculate mean trait expression of species in a community (CM)
 CM <- function(x) mean(dat$traitmat[x])
 
@@ -84,13 +86,20 @@ CM_cor <- apply(z>0.5, 1, CM)
 CM_true <- apply(dat$z_true==1, 1, CM)
 
 # Plot CM along gradient
-plot(dat$gradient, CM_obs, pch = 16, cex = 0.7, ylim = c(-1, 1), 
-     xlab = "Gradient", ylab = "Community mean")
+plot(dat$gradient, CM_obs, ylim = c(-1, 1), xlim = c(-5, 5), axes=F, xlab = "", ylab = "", pch = 16, cex = 0.7)
 points(dat$gradient, CM_true, cex = 0.7, col = "orange")
 points(dat$gradient, CM_cor, pch = "+", cex = 0.7, col = "red")
-abline(lm(CM_obs ~ dat$gradient))
-abline(lm(CM_true ~ dat$gradient), col = "orange")
-abline(lm(CM_cor ~ dat$gradient), col = "red")
+a <- coef(lm(CM_obs ~ dat$gradient))
+curve(a[1] + a[2]*x, -5, 5, add = TRUE)
+a <- coef(lm(CM_true ~ dat$gradient))
+curve(a[1] + a[2]*x, -5, 5, add = TRUE, col = "orange")
+a <- coef(lm(CM_cor ~ dat$gradient))
+curve(a[1] + a[2]*x, -5, 5, add = TRUE, col = "red")
+polygon(c(-10,10,10,-10), c(-10, -10, -1, -1), col = "white", border = "white")
+axis(side=1, seq(-5, 5, 2.5), pos = -1, cex = 0.7)
+axis(side = 2, las = 1, pos = -5, cex = 0.7)
+mtext(text = "Gradient", side = 1, line = 2, cex = 1)
+mtext(text = "Community mean (CM)", side = 2, line = 3, cex = 1)
 ```
 
 **Fig. 1:** Mean trait expression (CM) of true communities (open orange dots, only known because data are simulated), CMs of observed communities (black dots) and CMs from detection-corrected communities (red +) along elevational gradient.
@@ -135,7 +144,7 @@ Indeed more than a quarter of the species were observed in less than 10% of the 
 
 As above we estimate the detection corrected meta-community using the functions form the package `unmarked`, calculate CMs from detection-corrected meta-communities and compare it with the CMs from observations and the true meta-community known from the simulation.
 
-```{r, message=FALSE, warning=FALSE, cache=TRUE, fig.height=5}
+```{r fig2, message=FALSE, warning=FALSE, cache=TRUE, fig.height=5, fig.width= 4}
 # Estimate detection-corrected meta-community matrix
 z <- array(NA, dim = c(dim(dat$y)[1], dim(dat$y)[2]))
 for(k in 1:dim(dat$y)[2]) {
@@ -151,16 +160,23 @@ CM_cor <- apply(z>0.5, 1, CM)
 CM_true <- apply(dat$z_true==1, 1, CM)
 
 # Plot CMs along gradient
-plot(dat$gradient, CM_obs, pch = 16, cex = 0.7, ylim = c(-1, 1), 
-     xlab = "Gradient", ylab = "Community mean")
+plot(dat$gradient, CM_obs, ylim = c(-1.5, 1.5), xlim = c(-5, 5), axes=F, xlab = "", ylab = "", pch = 16, cex = 0.7)
 points(dat$gradient, CM_true, cex = 0.7, col = "orange")
 points(dat$gradient, CM_cor, pch = "+", cex = 0.7, col = "red")
-abline(lm(CM_obs ~ dat$gradient))
-abline(lm(CM_true ~ dat$gradient), col = "orange")
-abline(lm(CM_cor ~ dat$gradient), col = "red")
+a <- coef(lm(CM_obs ~ dat$gradient))
+curve(a[1] + a[2]*x, -5, 5, add = TRUE)
+a <- coef(lm(CM_true ~ dat$gradient))
+curve(a[1] + a[2]*x, -5, 5, add = TRUE, col = "orange")
+a <- coef(lm(CM_cor ~ dat$gradient))
+curve(a[1] + a[2]*x, -5, 5, add = TRUE, col = "red")
+polygon(c(-10,10,10,-10), c(-10, -10, -1.5, -1.5), col = "white", border = "white")
+axis(side=1, seq(-5, 5, 2.5), pos = -1.5, cex = 0.7)
+axis(side = 2, las = 1, pos = -5, cex = 0.7)
+mtext(text = "Gradient", side = 1, line = 2, cex = 1)
+mtext(text = "Community mean (CM)", side = 2, line = 3, cex = 1)
 ```
 
-**Fig. 2:** Mean trait expression (CM) of true communities (open orange dots, only known because data are simulated), CMs of observed communities (black dots) and CMs from detection-corrected communities (red +) along elevational gradient.
+**Fig. 2:** Results of applying the method to meta-community data were 27% of the 100 species were observed in less than 10% of the 200 sites. Community means (CMs) of true communities (open orange dots, only known because data were simulated), CMs of observed communities (black dots) and CMs from detection-corrected communities (red +) along elevational gradient. The lines represent the regression lines from linear models with CMs as dependent variable and the gradient as predictor). 
 
 In this example, the change in CMs along the gradient is steeper in the true communities than in the observed communities. Our approach that accounts for detection filtering is doing quit well in recovering the true pattern of CMs along the gradient. Still, however, the slope of CMs along the gradient estimated from the detection-corrected meta-communities is slightly less steep than the slope of true CMs. This is likely because two species were never observed and our approach is not able to account for the true occurrences of theses species. 
 

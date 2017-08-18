@@ -2,7 +2,9 @@
 title: "Analyses of plants data from the Swiss Biodiversity Monitoring (BDM)"
 author: "Tobias Roth, Eric Allan, Peter B. Pearman and Valentin Amrhein"
 date: "`r Sys.Date()`"
-output: rmarkdown::pdf_document
+output: 
+  rmarkdown::pdf_document:
+        toc: true  
 vignette: >
   %\VignetteIndexEntry{Analyses of plants data from the Swiss Biodiversity Monitoring (BDM)"}
   %\VignetteEngine{knitr::rmarkdown}

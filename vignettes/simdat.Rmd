@@ -2,7 +2,9 @@
 title: "Simulation of meta-community data subject to environmental and detection filtering"
 author: "Tobias Roth, Eric Allan, Peter B. Pearman and Valentin Amrhein"
 date: "`r Sys.Date()`"
-output: rmarkdown::pdf_document
+output: 
+  rmarkdown::pdf_document:
+        toc: true  
 vignette: >
   %\VignetteIndexEntry{Simulation of a meta-community subject to environmental and detection filtering}
   %\VignetteEngine{knitr::rmarkdown}

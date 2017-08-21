@@ -59,4 +59,6 @@ vignette("main_analyses", package="detectionfilter")
 
 *11-Aug-2017*: Copy /inst/doc/main_analysis.Rmd to /vignettes/main_analyses.Rmd
 
-*18-Aug-2017*: TOC to all vignettes. Test added to main_analyses.Rmd to compare the effect of rare and common species on functional trait measures. 
+*18-Aug-2017*: TOC to all vignettes. Analyses added to main_analyses.Rmd to compare functional composition and diversity measures from all observation and from observations with rare (< four observations) species removed. 
+
+*21-Aug-2017*: Analyses added to main_analyses.Rmd to infer whether the detection effect we observe for functional packing is larger than what we expect by adding missed species at random. 

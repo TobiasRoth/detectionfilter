@@ -668,7 +668,7 @@ We found that measures of functional composition and diversity calculated from t
 
 
 # Effect of remooving rare species
-For all analyses we removed species that were observed at less than 4 sites. This is because it was not able to apply the hierarchical models to some of these species. To infer whether this may have impacted our results we calculated all measures of functional composition and diversity with and without missing species and infered how strong the measures were correlated. 
+For all analyses we removed species that were observed at less than 4 sites. This is because it was not able to apply the hierarchical models to some of these species. To infer whether this may have impacted our results we calculated all measures of functional composition and diversity with and without missing species and inferred how strong the measures were correlated. 
 
 ```{r}
 # Specific leaf area (SLA)

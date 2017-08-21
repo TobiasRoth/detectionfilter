@@ -131,7 +131,7 @@ Unobserved species may arise because they were rare and did (by chance) not occu
 sum(apply(dat$z_true, 2, sum)>0)
 ```
 
-Since we use simulated data we know the true meta-community. Indeed all 100 species were present in at least on of the sites. Thus the two unobserved species were missed in all the sites they occured.
+Since we use simulated data we know the true meta-community. Indeed all 100 species were present in at least on of the sites. Thus the two unobserved species were missed in all the sites they occurred.
 
 Additionally to the problem that two species were not observed at all, we also face the problem that some species were observed only at few sites.
 

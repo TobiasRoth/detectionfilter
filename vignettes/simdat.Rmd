@@ -59,7 +59,7 @@ hist(plogis(rnorm(1733, mean.lpsi, sig.lpsi)),
 
 Thus fare, occupancies of species are constant across sites. However, a more likely scenario would be that the sites are distributed across an environmental gradient and for each species the occupancies would vary along this gradient. A sensible way to describe this might be to use a logistic regression for each species with the occupancy as the dependent variable and the gradient as predictor variable. For simplicity we here use only the linear term (slope) of the gradient, however one could also use linear and quadratic terms to allow for peak occupancy at intermediate stage of the gradient. 
 
-Again a very parsimonious description would be to assume that the differences between species in the  slope of the gradient are normally distributed. Thus with only four parameters (mean intercept of species, SD of differences in intercept between species, mean slope of gradient effect of species, SD of differences in slope between species) we can describe how the occupancies of species are distributed across an (environmental) gradient.
+Again a very parsimonious description would be to assume that the differences between species in the slope of the gradient are normally distributed. Thus with only four parameters (mean intercept of species, SD of differences in intercept between species, mean slope of gradient effect of species, SD of differences in slope between species) we can describe how the occupancies of species are distributed across an (environmental) gradient.
 
 ```{r, fig.height=4, cache=TRUE}
 # Choose how many species should be simulated
@@ -107,12 +107,12 @@ for(k in 1:nspec) {
 ```
 
 # Environmental filtering
-It is now time to add some ideas from functional ecology. A particular ideas would be that the response of species occurrence along a gradient (Fig. 2) does not vary randomly between species but varies according to some specific (functional) traits of the species. If we think of the gradient as some sort of an environmental gradient (e.g. temperature gradient, humidity gradient, ...) and the distribution of species along this gradient can be explained by differences in traits of the species we would speak of environmental filtering. 
+It is now time to add some ideas from functional ecology. A particular idea would be that the response of species occurrence along a gradient (Fig. 2) does not vary randomly between species but varies according to some specific (functional) traits of the species. If we think of the gradient as some sort of an environmental gradient (e.g. temperature gradient, humidity gradient, ...) and the distribution of species along this gradient can be explained by differences in traits of the species we would speak of environmental filtering. 
 
 Given environmental filtering, a prediction would be that the expression of the functional traits of species in the community would change along the gradient. For example we could measure the average expression of a functional trait of occurring species (i.e. the community mean, CM) and infer whether it is changing along the gradient.
 
 ```{r, cache=TRUE}
-# Distribution of functional trait expresssion across species
+# Distribution of functional trait expression across species
 # (we assume that we standardized the trait values and the range 
 # of trait values covers about 6 standard deviations)
 trait <- rnorm(nspec, 0, 1.5)
@@ -158,11 +158,11 @@ abline(h = mean(trait), lty = 2)
 
 **Fig. 4:** Mean trait value of occurring species (i.s. CM) at communities along the gradient. The solid line gives the regression line. For reference the dashed line gives the average trait expression for all species.
 
-Now the CM decreases along the gradient and the regression line clearly deviates from the zero-line. In our example this pattern is explained by the filtering of larger species at higher elevations (and the apposite at low elevations.)
+Now the CM decreases along the gradient and the regression line clearly deviates from the zero-line. In our example this pattern is explained by the filtering of larger species at higher elevations (and the opposite at low elevations.)
 
 
 # Detection filtering
-Up to now, we have simulated a meta-community `z` subject to environmental filtering. However, if we do a field surveys to infer the presence of species in multiple communities, we are unlikely to get exactly the community matrix `z`. This is because measurement errors seems likely, especially because some of the species are not seen even tough they were present (i.e. false-negatives). Lets define the observations as `y[i,k]=0` if we did not observe species `k` at site `i` and `y[i,k]=1` if we observed the species. Thus, whenever a species is not present in a community, that is `z[i,k]=0`, we can not observe the species (`y[i,k]=0`). However, if a species is  present in a community, that is `z[i,k]=1`, we may or may not observe the species with a certain probability. We may call this probability as the detection probability `p`. Thus, whether we observe a species present in a community we can simulate from a Bernoulli distribution with `p` as its parameter.
+Up to now, we have simulated a meta-community `z` subject to environmental filtering. However, if we do a field surveys to infer the presence of species in multiple communities, we are unlikely to get exactly the community matrix `z`. This is because measurement errors seem likely, especially because some of the species are not seen even though they were present (i.e. false-negatives). Let’s define the observations as `y[i,k]=0` if we did not observe species `k` at site `i` and `y[i,k]=1` if we observed the species. Thus, whenever a species is not present in a community, that is `z[i,k]=0`, we can not observe the species (`y[i,k]=0`). However, if a species is present in a community, that is `z[i,k]=1`, we may or may not observe the species with a certain probability. We may call this probability as the detection probability `p`. Thus, whether we observe a species present in a community we can simulate from a Bernoulli distribution with `p` as its parameter.
 
 Similar as for occupancy, the detection probability may vary between species and between some characteristics of the survey. For example, the date when a biologist surveyed a community may vary between communities. This may well affect the probability to detect species for instance because a plant grows higher during the season and might thus be easier to be detected later on. We call this effect of the date on the detection probability of a species the phenological effect. 
 
@@ -219,7 +219,7 @@ abline(lm(CM_true ~ gradient), col = "orange")
 
 Clearly observed species richness is biased low as compared to the true species richness in communities. Furthermore, the trend of species richness along the gradient seem to differ between observed and true species richness. This would be especially problematic as inferring patterns of community change along a gradient is a nice way to infer the driving patterns that drive the assembly of communities. In contrast, the community means of the functional trait is not affected by imperfect detection. This is not surprising as detection probability of a species in this example was unrelated to the expression of the functional trait in that species.
 
-However, it seems likely that at least some of the functional traits that are often used in functional ecology research predict how likely it is to detect a species. For instance plant height is an important functional trait and to detect larger plants species seems more likely than to detect smaller plant species. Thus, although present in the (true) community some of the species are filtered from the observed communities and this filtering is related to the functional trait. We therefore speak of *detection filtering*. To implement detection filtering in the simulation we add an other parameter that describes how strongly the average detection probability change with the expression of the functional trait.
+However, it seems likely that at least some of the functional traits that are often used in functional ecology research predict how likely it is to detect a species. For instance, plant height is an important functional trait and to detect larger plants species seems more likely than to detect smaller plant species. Thus, although present in the (true) community some of the species are filtered from the observed communities and this filtering is related to the functional trait. We therefore speak of *detection filtering*. To implement detection filtering in the simulation we add another parameter that describes how strongly the average detection probability change with the expression of the functional trait.
 
 ```{r, fig.height=4, cache=TRUE}
 # Effect of functional trait on the average detection probability of a species
@@ -251,9 +251,10 @@ abline(lm(CM_true ~ gradient), col = "orange")
 
 **Fig. 6:** *Left panel.* The average detection probability of a species is increasing with the expression of the trait value in that species. *Right panel.* Mean trait expression (CM) of true communities (open orange dots) and CMs of observed communities (black dots) along elevational gradient.
 
-The observed communities tend to reveal lower community mean values of the trait expression as compared to the (true) communities. This is because species with low trait value are more likely to be filtered from the observed communities as their  detection probability is lower than for species with larger trait value. Note that in the simulation their is no direct effect of the gradient on detection probabilities. Nonetheless, the effect of detection filtering tend to decrease with the gradient. This is because at the lower end of the gradient, the communities consist of fewer species with small trait values and thus with low detection probabilities. If these species are filtered from the observed communities the CMs of these communites will strongly increase. Detection filtering has thus a stronger effect compared to communities at the upper side of the gradient, where the community contains mainly of species with low trait values with less strong effect on CMs if some of these species are filtered from the observed communities. As a result, the effect of detection filtering on measures of functional traits may vary with gradient.
+The observed communities tend to reveal lower community mean values of the trait expression as compared to the (true) communities. This is because species with low trait value are more likely to be filtered from the observed communities as their detection probability is lower than for species with larger trait value. Note that in the simulation there is no direct effect of the gradient on detection probabilities. Nonetheless, the effect of detection filtering tends to decrease with the gradient. This is because at the lower end of the gradient, the communities consist of fewer species with small trait values and thus with low detection probabilities. If these species are filtered from the observed communities, the CMs of these communities will strongly increase. Detection filtering has thus a stronger effect compared to communities at the upper side of the gradient, where the community contains mainly of species with low trait values with less strong effect on CMs if some of these species are filtered from the observed communities. As a result, the effect of detection filtering on measures of functional traits may vary with gradient.
 
 
 # References
 Kéry, M.; Royle, J. A., 2016. Applied Hierarchical Modelling in Ecology. Academic Press.
+
 

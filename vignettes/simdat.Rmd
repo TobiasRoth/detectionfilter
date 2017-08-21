@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Introduction
+# Introduction 
 We think of a community as a collection of species occurring at a single site, while a meta-community is a collection of communities at multiple sites. In this vignette we adopt the simulation of a meta-community described in chapter 11.2 of Kéry and Royle (2016). Note that we here focus on meta-communities for presence/absence patterns of species, while it is rather straightforward to adopt the concepts to abundance data (see Chapter 11 in Kéry and Royle 2016 for more details). 
 
 As a requirement to run the presented code the latest version of the *detectionfilter* package should be downloaded using the following code.

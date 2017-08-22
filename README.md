@@ -53,7 +53,7 @@ vignette("main_analyses", package="detectionfilter")
 ````
 
 ## Modifications
-*07-Jul-2017*: First working version of package with a first draft of all vignettes, functions and data files. [Version 0.1.1](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.1).
+*07-Jul-2017*: First working version of package with a first draft of all vignettes, functions and data files. [Version 0.0.1](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.1).
 
 *10-Aug-2017*: Edit of main_analyses.Rmd, including minor changes to graphs and clarification of text.  Some questions are inserted IN CAPS and need to be addressed. Addition of README.txt, modification of .gitignore
 
@@ -62,3 +62,5 @@ vignette("main_analyses", package="detectionfilter")
 *18-Aug-2017*: TOC to all vignettes. Analyses added to main_analyses.Rmd to compare functional composition and diversity measures from all observation and from observations with rare (< four observations) species removed. 
 
 *21-Aug-2017*: Analyses added to main_analyses.Rmd to infer whether the detection effect we observe for functional packing is larger than what we expect by adding missed species at random. 
+
+*07-Jul-2017*: Version of package submitted to Methods in Ecology and Evolution [Version 0.0.2](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.2).

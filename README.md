@@ -63,4 +63,4 @@ vignette("main_analyses", package="detectionfilter")
 
 *21-Aug-2017*: Analyses added to main_analyses.Rmd to infer whether the detection effect we observe for functional packing is larger than what we expect by adding missed species at random. 
 
-*07-Jul-2017*: Version of package submitted to Methods in Ecology and Evolution [Version 0.0.2](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.2).
+*22-Aug-2017*: Version of package submitted to Methods in Ecology and Evolution [Version 0.0.2](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.2).

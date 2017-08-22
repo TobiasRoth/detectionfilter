@@ -339,6 +339,7 @@ In communities below 750m, the species that most often remain undetected were *B
 
 
 
+
 # Community composition and diversity along elevational gradient
 In this chapter we will calculate functional composition (i.e. single trait measures such as community mean)  and diversity (i.e. multi trait measures) from observed (`commat`) and detection-corrected meta-community (`z`). Differences between measures from observed and detection-corrected communities should be due to detection filtering.
 
@@ -570,7 +571,6 @@ f.plotFD(d, "(c) Taxonomic richness", "Number of species",
 **Fig. 3.2:** Changes in (a) functional richness (convex hull volume of the three functional dimensions’ specific leaf area, canopy height and seed mass) (b) functional packing (mean nearest neighbour distance) and (c) taxonomic diversity (number of species) along the elevational gradient. The lines represent the predictions from the generalized additive model (GAM) applied to the observed communities (dotted lines) and to the detection-corrected communities (solid line); the shaded area give the region of the bootstraped 95% confidence intervals of predictions from the GAM.
 
 
-
 ```{r, cache=TRUE}
 nsim <- 10
 
@@ -666,61 +666,73 @@ cor(used, allobs)
 ```
 We found that measures of functional composition and diversity calculated from the observations of all `r ncol(commat_obs)` species were very strongly correlated with measures calculated from the `r ncol(commat)` species with at least four observations (all r > 0.995). We therefore confident that removing species with less than four observations did not strongly bias our results.
 
+To further infer the effect of removing rare species, we compared functional composition and diversity calculated from all observations and only from species with at least four observations. Similar to how we estimated detection effects on communities, we calculated the proportion of communities removing rare species hat a relevant effect.
 
-# Effect of remooving rare species
-For all analyses we removed species that were observed at less than 4 sites. This is because it was not able to apply the hierarchical models to some of these species. To infer whether this may have impacted our results we calculated all measures of functional composition and diversity with and without missing species and inferred how strong the measures were correlated. 
-
-```{r}
+```{r, cache=TRUE}
 # Specific leaf area (SLA)
-f <- function(x) mean(traitmat$sla[as.logical(x)])
-used <- apply(commat, 1, f)
-f <- function(x) mean(traitmat_all$sla[as.logical(x)])
-allobs <- apply(commat_obs, 1, f)
-cor(used, allobs)
+f.sla <- function(x) mean(traitmat$sla[as.logical(x)])
+CM.sla.obs <- apply(commat, 1, f.sla)
+f.sla <- function(x) mean(traitmat_all$sla[as.logical(x)])
+CM.sla.cor <- apply(commat_obs, 1, f.sla)
+rel <- 100 * abs(lm(CM.sla.cor ~ plantsBDM$elevation)$coef[2])
+dif.sla <- abs(CM.sla.obs - CM.sla.cor) > rel
 
 # Canopy height (CH)
-f <- function(x) mean(traitmat$ch[as.logical(x)])
-used <- apply(commat, 1, f)
-f <- function(x) mean(traitmat_all$ch[as.logical(x)])
-allobs <- apply(commat_obs, 1, f)
-cor(used, allobs)
+f.ch <- function(x) mean(traitmat$ch[as.logical(x)])
+CM.ch.obs <- apply(commat, 1, f.ch)
+f.ch <- function(x) mean(traitmat_all$ch[as.logical(x)])
+CM.ch.cor <- apply(commat_obs, 1, f.ch)
+rel <- 100 * abs(lm(CM.ch.cor ~ plantsBDM$elevation)$coef[2])
+dif.ch <- abs(CM.ch.obs - CM.ch.cor) > rel
 
 # Seed mass (SM)
-f <- function(x) mean(traitmat$sm[as.logical(x)])
-used <- apply(commat, 1, f)
-f <- function(x) mean(traitmat_all$sm[as.logical(x)])
-allobs <- apply(commat_obs, 1, f)
-cor(used, allobs)
+f.sm <- function(x) mean(traitmat$sm[as.logical(x)])
+CM.sm.obs <- apply(commat, 1, f.sm)
+f.sm <- function(x) mean(traitmat_all$sm[as.logical(x)])
+CM.sm.cor <- apply(commat_obs, 1, f.sm)
+rel <- 100 * abs(lm(CM.sm.cor ~ plantsBDM$elevation)$coef[2])
+dif.sm <- abs(CM.sm.obs - CM.sm.cor) > rel
+```
 
+Bias due to removing rare species was relevant in `r round(100*mean(dif.sla),1)`% of communities for SLA, in `r round(100*mean(dif.ch),1)`% of communities for canopy height and in `r round(100*mean(dif.sm),1)`% of communities for seed mass. 
+
+
+```{r, cache=TRUE}
 # Functional trait space (FRic)
-f <- function(x) convhulln(traitmat[as.logical(x),], "FA")$vol
-used <- apply(commat, 1, f)
-f <- function(x) convhulln(traitmat_all[as.logical(x),], "FA")$vol
-allobs <- apply(commat_obs, 1, f)
-cor(used, allobs)
+f.FRic <- function(x) convhulln(traitmat[as.logical(x),], "FA")$vol
+FRic.obs <- apply(commat, 1, f.FRic)
+f.FRic <- function(x) convhulln(traitmat_all[as.logical(x),], "FA")$vol
+FRic.cor <- apply(commat_obs, 1, f.FRic)
+rel <- 100 * abs(lm(FRic.obs ~ plantsBDM$elevation)$coef[2])
+FRic.dif <- abs(FRic.obs - FRic.cor) > rel
 
-## Calculate distance matrix from complete trait matrix 
-dist_all <- as.matrix(dist(traitmat_all))
+## Calculate distance matrix from trait matrix 
+dist <- as.matrix(dist(traitmat))
 
 # Mean nearest neighbout distance (mnnd)
-f <- function(x) {
+dist <- as.matrix(dist(traitmat))
+f.mnnd <- function(x) {
   sample.dis <- dist[as.logical(x),as.logical(x)]
   mean(apply(sample.dis, 1, function(x) min(x[x>0])))
 }
-used <- apply(commat, 1, f)
-f <- function(x) {
-  sample.dis <- dist_all[as.logical(x),as.logical(x)]
+mnnd.obs <- apply(commat, 1, f.mnnd)
+dist <- as.matrix(dist(traitmat_all))
+f.mnnd <- function(x) {
+  sample.dis <- dist[as.logical(x),as.logical(x)]
   mean(apply(sample.dis, 1, function(x) min(x[x>0])))
 }
-allobs <- apply(commat_obs, 1, f)
-cor(used, allobs)
+mnnd.cor <- apply(commat_obs, 1, f.mnnd)
+rel <- 100 * abs(lm(mnnd.obs ~ plantsBDM$elevation)$coef[2])
+mnnd.dif <- abs(mnnd.obs - mnnd.cor) > rel
 
 # Species richness SR
-used <- apply(commat, 1, sum)
-allobs <- apply(commat_obs, 1, sum)
-cor(used, allobs)
+SR.obs <- apply(commat, 1, sum)
+SR.cor <- apply(z, 1, sum)
+rel <- 100 * abs(lm(SR.obs ~ plantsBDM$elevation)$coef[2])
+SR.dif <- abs(SR.obs - SR.cor) > rel
 ```
-We found that measures of functional composition and diversity calculated from the observations of all `r ncol(commat_obs)` species were very strongly correlated with measures calculated from the `r ncol(commat)` species with at least four observations (all r > 0.995). We therefore confident that removing species with less than four observations did not strongly bias our results.
+
+Bias due to removing rare species was relevant in `r round(100*mean(FRic.dif),1)`% of communities for functional richness, and in `r round(100*mean(mnnd.dif),1)`% of communities for functional packing.  For all measures bias due to removing rare species was less strong than bias due to detection filtering. Again functional packing is the measure that reacts most sensitive to undersampling. 
 
 
 # References

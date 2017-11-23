@@ -65,4 +65,4 @@ vignette("main_analyses", package="detectionfilter")
 
 *22-Aug-2017*: Version of package submitted to Methods in Ecology and Evolution [Version 0.0.2](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.2).
 
-*23-Nov-2017*: Small edits to vignettes. First release of package. [Version 1.0](https://github.com/TobiasRoth/detectionfilter/releases/tag/1.0).
+*23-Nov-2017*: Small edits to vignettes. First release of package. [Version 1.0.0](https://github.com/TobiasRoth/detectionfilter/releases/tag/1.0.1).

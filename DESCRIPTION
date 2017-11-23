@@ -1,7 +1,7 @@
 Package: detectionfilter
 Type: Package
 Title: Accounting for detection filtering in functional ecology
-Version: 1.0
+Version: 1.0.1
 Author: Tobias Roth, Eric Allan, Peter B. Pearmand, Valentin Amrhein
 Maintainer: Tobias Roth <t.roth@unibas.ch>
 Description: The package implements the methods and analyses used in the manusript "Functional ecology and imperfect detection of plant species" by Tobias Roth, Eric Allan, Peter B. Pearmand, and Valentin Amrhein.

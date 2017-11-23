@@ -1,10 +1,10 @@
 # Functional ecology and imperfect detection of species
 
-Citation for submitted manuscript:
+Citation for accepted manuscript:
 
-Roth, T., Allan, E., Pearman, P. B., Amrhein, V. (submitted). Functional ecology and imperfect detection of species. Submitted to Methods in Ecology and Evolution.
+Roth, T., Allan, E., Pearman, P. B., Amrhein, V. (2017). Functional ecology and imperfect detection of species. Accepted by Methods in Ecology and Evolution
 
-This repository contains all the materials needed to reproduce the analyses in Roth et al. (submitted) Functional ecology and imperfect detection of species. These materials are presented as an R Package that contains:
+This repository contains all the materials needed to reproduce the analyses in Roth et al. (2017) Functional ecology and imperfect detection of species. These materials are presented as an R Package that contains:
 
 - a function to simulate observed meta-community data from communities that are subject to ecological and detection filtering, 
 - the analysed plant data from the Swiss Biodiversity Monitoring, 
@@ -64,3 +64,5 @@ vignette("main_analyses", package="detectionfilter")
 *21-Aug-2017*: Analyses added to main_analyses.Rmd to infer whether the detection effect we observe for functional packing is larger than what we expect by adding missed species at random. 
 
 *22-Aug-2017*: Version of package submitted to Methods in Ecology and Evolution [Version 0.0.2](https://github.com/TobiasRoth/detectionfilter/releases/tag/0.0.2).
+
+*23-Nov-2017*: Small edits to vignettes. First release of package. [Version 1.0](https://github.com/TobiasRoth/detectionfilter/releases/tag/1.0).

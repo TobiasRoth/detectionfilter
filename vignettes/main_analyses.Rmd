@@ -222,6 +222,28 @@ d$meanel_sd <- as.vector(scale(log(d$meanel+1)))
 # Linear model
 mod <- lm(qlogis(P) ~ sla + ch + sm + nocc_sd + meanel_sd, data = d)
 round(summary(mod)$coef, 3)
+
+mod <- lm(qlogis(P) ~ sla + I(sla^2) + ch + I(ch^2) + sm + I(sm^2) + nocc_sd + I(nocc_sd^2) + meanel_sd + I(meanel_sd^2), data = d)
+round(summary(mod)$coef, 3)
+
+
+tt <- residuals(mod)
+m <- lm(qlogis(P) ~ sla + ch + sm + nocc_sd + meanel_sd, data = d[names(tt[tt<10]), ])
+round(summary(m)$coef, 3)
+plot(m)
+
+par(mar = c(5,5,1,3), mfrow = c(2,3))
+visreg(m, "sla", line=list(col="red"), points=list(cex=0.5, pch=16), 
+       xlab = "Specific leaf area (SLA)", ylab = "Species detection probability\n(logit-transformed)")
+visreg(m, "ch", line=list(col="red"), points=list(cex=0.5, pch=16), 
+       xlab = "Canopy height (CH)", ylab = "Species detection probability\n(logit-transformed)")
+visreg(m, "sm", line=list(col="red"), points=list(cex=0.5, pch=16), 
+       xlab = "Seed mass (SM)", ylab = "Species detection probability\n(logit-transformed)")
+visreg(m, "nocc_sd", line=list(col="red"), points=list(cex=0.5, pch=16), 
+       xlab = "Number of occurrences", ylab = "Species detection probability\n(logit-transformed)")
+visreg(m, "meanel_sd", line=list(col="red"), points=list(cex=0.5, pch=16), 
+       xlab = "Average elevation of occurrence", ylab = "Species detection probability\n(logit-transformed)")
+
 ```
 
 The intercept corresponds to the species' detection probability at the logit scale of a plant species with average trait expression. On the probability scale this corresponds to a detection probability of `r round(plogis(coef(mod)[1]),2)`. Increasing a functional trait value by one standard deviation increases detection probability to `r round(plogis(coef(mod)[1] + coef(mod)["ch"]), 2)` for canopy height, to `r round(plogis(coef(mod)[1] + coef(mod)["sm"]), 2)` for seed mass, and decreases the probability to `r round(plogis(coef(mod)[1] + coef(mod)["sla"]), 2)` for specific leaf area.

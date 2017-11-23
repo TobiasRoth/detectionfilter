@@ -63,7 +63,7 @@ for(k in 1:nspec) {
 
 ## ---- cache=TRUE---------------------------------------------------------
 # Distribution of functional trait expression across species
-# (we assume that we standardized the trait values and the range 
+# (we assume that we standardized the trait values, and the range 
 # of trait values covers about 6 standard deviations)
 trait <- rnorm(nspec, 0, 1.5)
 

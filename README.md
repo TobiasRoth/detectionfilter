@@ -1,8 +1,8 @@
 # Functional ecology and imperfect detection of species
 
-Citation for accepted manuscript:
+Citation for the manuscript:
 
-Roth, T., Allan, E., Pearman, P. B., Amrhein, V. (2017). Functional ecology and imperfect detection of species. Accepted by Methods in Ecology and Evolution
+Roth, T., Allan, E., Pearman, P. B., Amrhein, V. (2017). Functional ecology and imperfect detection of species. Accepted by Methods in Ecology and Evolution.
 
 This repository contains all the materials needed to reproduce the analyses in Roth et al. (2017) Functional ecology and imperfect detection of species. These materials are presented as an R Package that contains:
 

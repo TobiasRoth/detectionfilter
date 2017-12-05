@@ -1,10 +1,8 @@
 # Functional ecology and imperfect detection of species
 
-Citation for the manuscript:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1065446.svg)](https://doi.org/10.5281/zenodo.1065446)
 
-Roth, T., Allan, E., Pearman, P. B., Amrhein, V. (2017). Functional ecology and imperfect detection of species. Accepted by Methods in Ecology and Evolution.
-
-This repository contains all the materials needed to reproduce the analyses in Roth et al. (2017) Functional ecology and imperfect detection of species. These materials are presented as an R Package that contains:
+This repository contains all the materials needed to reproduce the analyses in Roth, T., Allan, E., Pearman, P. B., Amrhein, V. (2017). Functional ecology and imperfect detection of species. Accepted by *Methods in Ecology and Evolution*. These materials are presented as an R Package that contains:
 
 - a function to simulate observed meta-community data from communities that are subject to ecological and detection filtering, 
 - the analysed plant data from the Swiss Biodiversity Monitoring, 
